@@ -11,6 +11,20 @@ ikuti PRD PANDU LOTIM. Bagian di bawah masih menjelaskan fitur yang sudah ada da
 Browser ──HTTPS 443──> Nginx Proxy Manager ──> sik_nginx :80 (host 8040) ──> sik_web Gunicorn :8000 ──> sik_db MariaDB 10.11
 ```
 
+## Daftar isi
+
+- [Struktur](#struktur)
+- [Database Perizinan (Rilis 1)](#database-perizinan-rilis-1)
+- [Panduan aplikasi (khusus Admin Sistem)](#panduan-aplikasi-khusus-admin-sistem)
+- [Pusat Informasi Investasi (Modul 3)](#pusat-informasi-investasi-modul-3)
+- [Pengembangan lokal](#pengembangan-lokal)
+- [Data demo: buat, reset, hapus](#data-demo-buat-reset-hapus)
+- [Deployment di server](#deployment-di-server-pola-simbak--e-office)
+- [Nginx Proxy Manager (domain dan HTTPS)](#nginx-proxy-manager-domain-dan-https)
+- [Cadangan](#cadangan)
+- [Catatan keamanan](#catatan-keamanan)
+- Panduan email pengirim (SMTP): [docs/PANDUAN_EMAIL.md](docs/PANDUAN_EMAIL.md)
+
 ## Struktur
 
 | Lokasi | Isi |
@@ -102,8 +116,9 @@ python manage.py buat_akun_demo
 Perintah ini membuat akun di bawah, satu permohonan KKPR Nonberusaha contoh yang sudah diajukan,
 dan tiga contoh potensi investasi bertanda "(contoh)" untuk mencoba peta.
 Aman dijalankan ulang: akun yang sudah ada tidak dibuat ganda, tetapi passwordnya disetel ulang.
-Di komputer pengembang (`DJANGO_DEBUG=1`) password semua akun demo `demo123`. Di server production
-password wajib ditentukan sendiri (lihat langkah 5b di bagian Deployment).
+Di komputer pengembang (`DJANGO_DEBUG=1`) password semua akun demo `demo123`. Untuk kembali ke keadaan
+awal setelah mencoba alur sampai izin terbit: `python manage.py buat_akun_demo --reset`. Penjelasan
+lengkap, termasuk pemakaian di server: **[Data demo: buat, reset, hapus](#data-demo-buat-reset-hapus)**.
 
 | Email | Password (lokal) | Peran (PRD bagian 3) |
 | --- | --- | --- |
@@ -142,6 +157,72 @@ Setiap jenis izin punya batas layanan (hari, diatur di `/admin/`). Jalankan hari
 ```cron
 0 7 * * 1-5 docker exec sik_web python manage.py pengingat_sla
 ```
+
+## Data demo: buat, reset, hapus
+
+Data demo dipakai untuk latihan dan presentasi, di laptop maupun di server production. Satu perintah,
+tiga pilihan:
+
+| Tujuan | Laptop (`DJANGO_DEBUG=1`) | Server production |
+| --- | --- | --- |
+| Buat data demo | `python manage.py buat_akun_demo` | `docker compose exec web python manage.py buat_akun_demo` |
+| Kembali ke keadaan awal | `python manage.py buat_akun_demo --reset` | `docker compose exec web python manage.py buat_akun_demo --reset` |
+| Buang data demo | `python manage.py buat_akun_demo --hapus` | `docker compose exec web python manage.py buat_akun_demo --hapus` |
+
+### Isi data demo
+
+- Lima akun: `pemohon@sik.test`, `petugas@sik.test`, `pupr@sik.test` (Instansi Teknis, Dinas PUPR),
+  `pimpinan@sik.test`, dan `admin@sik.test` (Admin Sistem).
+- Satu permohonan KKPR Nonberusaha contoh milik `pemohon@sik.test`, lengkap dengan dokumen syarat,
+  berstatus *Diajukan* (siap diverifikasi petugas).
+- Tiga contoh potensi investasi bertanda "(contoh)" (Sembalun, Labuhan Haji, Jerowaru) untuk mencoba peta.
+
+### Password
+
+- **Laptop:** semua akun demo `demo123`.
+- **Server production:** perintah menanyakan password (dua kali, tidak tampil di layar) dan memakainya
+  untuk **semua** akun demo. `demo123` dan password lemah ditolak, karena `demo123` tertulis di README
+  publik dan `admin@sik.test` berperan Admin Sistem. Untuk skrip, password bisa diberikan lewat
+  `--password`, tetapi akan tersimpan di riwayat shell.
+
+Menjalankan ulang perintah tanpa opsi aman: akun tidak dibuat ganda, hanya passwordnya disetel ulang.
+
+### Reset (`--reset`)
+
+Mengembalikan data demo ke keadaan awal, misalnya setelah latihan agar presentasi dimulai dari nol:
+
+1. Permohonan contoh dihapus beserta dokumen, riwayat verifikasi, penilaian teknis, izin terbit, catatan
+   Database NonOSS, dan berkasnya di penyimpanan.
+2. Contoh investasi dihapus.
+3. Data demo dibuat ulang: permohonan contoh baru berstatus *Diajukan*, tiga contoh investasi, dan
+   akun demo diaktifkan kembali dengan password yang Anda ketik.
+
+### Hapus (`--hapus`)
+
+Membuang permohonan contoh dan contoh investasi (sama seperti langkah 1–2 reset), lalu **menonaktifkan**
+kelima akun demo. Jalankan sebelum go-live atau setelah presentasi. Akun tidak dihapus karena log audit
+merujuk ke akun itu; `--reset` mengaktifkannya kembali.
+
+### Konfirmasi
+
+Di server, `--reset` dan `--hapus` meminta Anda mengetik `HAPUS` sebelum menghapus. Tambahkan `--ya`
+untuk melewati konfirmasi (misalnya dari cron atau skrip). Di laptop tidak ada konfirmasi.
+
+### Batasan dan pengaman
+
+- Reset dan hapus **hanya** menyentuh permohonan milik `pemohon@sik.test` dan tiga contoh investasi
+  bernama persis (daftar penanda ada di `akun/demo.py`). Permohonan pemohon asli tidak pernah ikut
+  terhapus, termasuk yang pernah diproses oleh akun petugas demo.
+- Izin dari permohonan demo bernomor `DEMO-<nomor registrasi>` dan **tidak** memakai urutan nomor izin
+  resmi, sehingga tidak ada nomor izin resmi yang bolong setelah reset.
+- Akun yang Anda daftarkan sendiri saat demo (langkah *Pendaftaran* dengan email sungguhan), pemohon yang
+  didaftarkan lewat loket, dan permohonannya **tidak** ikut terhapus. Nonaktifkan manual di
+  **Pengaturan sistem → Pengguna**.
+- Selama ada, data demo ikut terhitung di statistik dan laporan bulanan. Jalankan `--reset` atau
+  `--hapus` setelah presentasi.
+- Log audit kegiatan demo tetap tersimpan (log audit tidak bisa dihapus).
+- Email notifikasi permohonan contoh dikirim ke alamat `@sik.test` yang tidak ada dan memantul ke kotak
+  surat pengirim.
 
 ## Deployment di server (pola SIMBAK / E-Office)
 
@@ -233,38 +314,11 @@ Isi email, nama, dan password; akun ini otomatis berperan Admin Sistem. Jangan m
 ### 5b. Data demo di server (opsional, untuk presentasi)
 
 ```bash
-docker compose exec web python manage.py buat_akun_demo           # buat data demo
-docker compose exec web python manage.py buat_akun_demo --reset   # kembali ke keadaan awal demo
-docker compose exec web python manage.py buat_akun_demo --hapus   # buang data demo (sebelum go-live)
+docker compose exec web python manage.py buat_akun_demo
 ```
 
-**Membuat.** Perintah pertama menanyakan password untuk **semua** akun demo (tidak tampil di layar), lalu
-membuat akun `pemohon@`, `petugas@`, `pupr@`, `pimpinan@`, dan `admin@sik.test`, satu permohonan KKPR
-contoh berstatus *Diajukan*, dan tiga contoh potensi investasi bertanda "(contoh)". Masuk ke
-`https://<domain>/akun/masuk/` dengan email itu dan password yang baru Anda ketik. `demo123` dan
-password lemah ditolak: `demo123` tertulis di README publik, dan `admin@sik.test` berperan Admin Sistem.
-
-**Reset (`--reset`).** Setelah latihan atau presentasi, data demo kembali seperti awal: permohonan contoh
-beserta dokumen, riwayat, penilaian, izin, dan catatan Database NonOSS-nya dihapus, lalu dibuat ulang
-berstatus *Diajukan*; contoh investasi dibuat ulang; akun demo diaktifkan lagi dengan password baru.
-Perintah meminta Anda mengetik `HAPUS` sebagai konfirmasi (`--ya` untuk melewatinya, mis. di cron).
-
-**Hapus (`--hapus`).** Membuang data demo yang sama dan menonaktifkan kelima akun demo. Akun tidak dihapus
-karena log audit merujuk ke akun itu; `--reset` mengaktifkannya kembali.
-
-Batasan yang perlu diketahui:
-
-- Reset dan hapus **hanya** menyentuh permohonan milik `pemohon@sik.test` dan tiga contoh investasi
-  bernama persis. Permohonan pemohon asli tidak pernah ikut terhapus, termasuk yang pernah diproses
-  akun petugas demo.
-- Izin dari permohonan demo bernomor `DEMO-<nomor registrasi>` dan **tidak** memakai urutan nomor izin
-  resmi, jadi tidak ada nomor resmi yang bolong setelah reset.
-- Akun yang Anda daftarkan sendiri saat demo (langkah *Pendaftaran* dengan email sungguhan) dan
-  permohonannya **tidak** ikut terhapus. Nonaktifkan manual di **Pengaturan sistem → Pengguna**.
-- Selama ada, data demo ikut terhitung di statistik dan laporan bulanan. Jalankan `--reset` atau
-  `--hapus` setelah presentasi. Log audit kegiatan demo tetap tersimpan.
-- Email notifikasi permohonan contoh dikirim ke alamat `@sik.test` yang tidak ada (memantul ke kotak surat
-  pengirim).
+Ditanya password untuk semua akun demo (tidak tampil di layar; `demo123` ditolak). Reset dan hapus
+data demo: lihat bagian **[Data demo: buat, reset, hapus](#data-demo-buat-reset-hapus)**.
 
 ### 6. Uji email
 
