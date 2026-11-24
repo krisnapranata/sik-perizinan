@@ -240,15 +240,10 @@ Bila gagal, cocokkan pesan galatnya dengan tabel *Masalah umum* di
 
 ### 7. Pasang domain di Nginx Proxy Manager
 
-**Hosts → Proxy Hosts → Add Proxy Host**:
-
-- **Details**: Domain Names = domain; Scheme `http`; Forward Hostname `sik_nginx`; Forward Port `80`;
-  centang **Block Common Exploits**.
-- **SSL**: Request a new SSL Certificate (Let's Encrypt), centang **Force SSL**, **HTTP/2**, **HSTS**.
-- **Advanced**: `client_max_body_size 30m;`
-- Jangan aktifkan **Cache Assets**: aturan cache CSS/JS sudah diatur oleh `sik_nginx`.
-
-Buka `https://<domain>` dan masuk dengan akun admin tadi.
+Ikuti bagian **[Nginx Proxy Manager (domain dan HTTPS)](#nginx-proxy-manager-domain-dan-https)** di
+bawah. Ringkasnya: Proxy Host `<domain>` → `http` `sik_nginx` port `80`, sertifikat Let's Encrypt
+dengan Force SSL, dan `client_max_body_size 30m;` di tab Advanced. Setelah itu buka `https://<domain>`
+dan masuk dengan akun admin tadi.
 
 ### 8. Pengisian awal oleh Admin Sistem
 
@@ -290,6 +285,101 @@ docker compose ps                             # pastikan kembali "healthy"
 Setelah mengubah `.env.production`, jalankan `docker compose up -d web` (perintah `restart` tidak
 membaca ulang berkas env). **Jangan pernah** menjalankan `docker compose down -v`: perintah itu
 menghapus volume database dan semua berkas pemohon.
+
+## Nginx Proxy Manager (domain dan HTTPS)
+
+Di server bersama, port 80 dan 443 dipegang oleh **Nginx Proxy Manager** (NPM, container `proxy-npm-1`),
+sama seperti SIMBAK dan E-Office. NPM menerima semua request dari internet, memasang sertifikat HTTPS,
+lalu meneruskannya ke Nginx internal SIK:
+
+```
+Browser ──HTTPS 443──> proxy-npm-1 ──http, network proxy_default──> sik_nginx:80 ──> sik_web:8000
+```
+
+`sik_nginx` bergabung ke network NPM (`proxy_default`) sehingga NPM memanggilnya dengan **nama
+container**, bukan IP. Port host 8040 hanya untuk uji dari server sendiri; tutup dari luar di firewall.
+
+### Sebelum membuat Proxy Host
+
+1. **DNS sudah mengarah ke server.** Hasil perintah ini harus IP publik server:
+   ```bash
+   dig +short perizinan.lomboktimurkab.go.id     # atau: nslookup perizinan.lomboktimurkab.go.id
+   ```
+   Perubahan DNS bisa butuh beberapa menit sampai beberapa jam. Let's Encrypt gagal selama DNS belum benar.
+2. **Port 80 dan 443 server terbuka dari internet.** Let's Encrypt memverifikasi domain lewat port 80.
+3. **`sik_nginx` bisa dicapai dari network NPM** (keduanya harus `200`/`{"status": "ok"}`):
+   ```bash
+   docker network inspect proxy_default --format '{{range .Containers}}{{.Name}} {{end}}' | tr ' ' '\n' | grep sik_nginx
+   docker run --rm --network proxy_default curlimages/curl:8.10.1 -s http://sik_nginx/sehat/
+   ```
+   Ganti `proxy_default` bila nama network NPM berbeda (langkah 3 deployment).
+
+### Membuat Proxy Host
+
+1. Buka panel NPM di `http://<ip-server>:81` dan masuk dengan akun admin NPM yang sudah dipakai untuk
+   aplikasi lain.
+2. **Hosts → Proxy Hosts → Add Proxy Host**.
+3. Tab **Details**:
+
+   | Isian | Nilai |
+   | --- | --- |
+   | Domain Names | `perizinan.lomboktimurkab.go.id` (ketik, lalu Enter) |
+   | Scheme | `http` (bukan https: HTTPS berhenti di NPM) |
+   | Forward Hostname / IP | `sik_nginx` |
+   | Forward Port | `80` |
+   | Cache Assets | **mati** (cache CSS/JS sudah diatur `sik_nginx` lewat `?v=`) |
+   | Block Common Exploits | nyala |
+   | Websockets Support | mati (tidak dipakai) |
+   | Access List | Publicly Accessible |
+
+4. Tab **SSL**:
+   - SSL Certificate: **Request a new SSL Certificate**.
+   - Nyalakan **Force SSL** dan **HTTP/2 Support**.
+   - Isi email untuk Let's Encrypt, centang persetujuan, lalu **Save**. Tunggu sampai sertifikat terbit
+     (biasanya kurang dari satu menit).
+   - **HSTS Enabled**: nyalakan **setelah** `https://<domain>` terbukti berjalan normal. Begitu aktif,
+     browser pengunjung menolak versi http domain itu selama berbulan-bulan. Biarkan
+     *HSTS Subdomains* mati kecuali semua subdomain juga sudah HTTPS.
+5. Tab **Advanced**, kotak *Custom Nginx Configuration*:
+   ```nginx
+   client_max_body_size 30m;
+   proxy_read_timeout 120s;
+   proxy_send_timeout 120s;
+   ```
+   Baris pertama mengizinkan unggahan sampai 30 MB (sama dengan `sik_nginx`); dua baris berikutnya
+   memberi waktu ekspor laporan Excel/PDF yang besar.
+6. **Save**. Status Proxy Host harus **Online**.
+
+NPM sudah meneruskan `X-Real-IP` dan `X-Forwarded-Proto` secara bawaan, jadi tidak perlu ditambah.
+`sik_nginx` hanya mempercayai `X-Real-IP` dari jaringan privat, sehingga batas percobaan login dihitung
+per IP asli pengunjung.
+
+### Menguji
+
+```bash
+curl -sI http://perizinan.lomboktimurkab.go.id | head -3      # 301 ke https://
+curl -s  https://perizinan.lomboktimurkab.go.id/sehat/         # {"status": "ok"}
+curl -sI https://perizinan.lomboktimurkab.go.id/akun/masuk/ | head -1   # HTTP/2 200
+```
+
+Lalu dari browser: buka `https://<domain>`, pastikan ikon gembok tampil, masuk sebagai admin
+(menguji CSRF dan cookie aman), dan coba unggah satu berkas PDF di permohonan (menguji batas unggah).
+
+### Masalah umum
+
+| Gejala | Penyebab | Perbaikan |
+| --- | --- | --- |
+| **502 Bad Gateway** | `sik_nginx` mati, tidak di network NPM, Forward Hostname salah ketik, atau Scheme diisi `https` | `docker compose ps`; jalankan uji `curl` dari network NPM di atas; pastikan Scheme `http`, hostname `sik_nginx`, port `80` |
+| **504 Gateway Timeout** saat ekspor | Proses lebih lama dari batas waktu proxy | Pastikan `proxy_read_timeout 120s;` ada di tab Advanced |
+| **413 Request Entity Too Large** | Batas unggah NPM masih bawaan Nginx (1 MB) | Tambahkan `client_max_body_size 30m;` di tab Advanced |
+| **400 Bad Request** | Domain belum ada di `DJANGO_ALLOWED_HOSTS` | Tambahkan, lalu `docker compose up -d web` |
+| **403 CSRF verification failed** saat login | `DJANGO_CSRF_TRUSTED_ORIGINS` tidak berisi `https://<domain>` | Tambahkan lengkap dengan `https://`, lalu `docker compose up -d web` |
+| Sertifikat gagal terbit (*Internal Error*) | DNS belum mengarah ke server, port 80 tertutup, atau batas Let's Encrypt (terlalu sering mencoba) | Cek `dig`, buka port 80, tunggu sekitar satu jam sebelum mencoba lagi |
+| Tautan di email/QR mengarah ke `localhost` | `SITUS_URL` belum diisi domain | Isi `SITUS_URL=https://<domain>`, lalu `docker compose up -d web` |
+| Semua pengguna kena **429** bersamaan | `X-Real-IP` tidak sampai ke `sik_nginx` | Jangan menimpa header `X-Real-IP` di tab Advanced NPM |
+| Tampilan lama setelah update | Cache Assets NPM menyala | Matikan Cache Assets di tab Details |
+
+Log untuk melacak: `docker compose logs --tail=100 nginx web` (SIK) dan `docker logs --tail=100 proxy-npm-1` (NPM).
 
 ## Cadangan
 
