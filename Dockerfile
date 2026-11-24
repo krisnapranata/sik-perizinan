@@ -26,7 +26,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:$PATH" \
     DJANGO_SETTINGS_MODULE=config.settings \
-    GUNICORN_BIND=127.0.0.1:8000 \
+    PORT=8000 \
     GUNICORN_WORKERS=3
 
 # Library runtime mysqlclient saja (tanpa compiler).
@@ -52,7 +52,7 @@ EXPOSE 8000
 
 # /sehat/ ringan, tanpa login, dan dikecualikan dari middleware.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import os, urllib.request as u; u.urlopen('http://' + os.environ.get('GUNICORN_BIND', '127.0.0.1:8000') + '/sehat/', timeout=5)"
+    CMD python -c "import os, urllib.request as u; u.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '8000') + '/sehat/', timeout=5)"
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind \"$GUNICORN_BIND\" --workers \"$GUNICORN_WORKERS\" --timeout 120 --access-logfile -"]
+CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind \"0.0.0.0:$PORT\" --workers \"$GUNICORN_WORKERS\" --timeout 120 --access-logfile -"]

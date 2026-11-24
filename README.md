@@ -8,7 +8,7 @@ informasi investasi, serta data dan analisis. Sistem pengelolanya bernama SIDE S
 ikuti PRD PANDU LOTIM. Bagian di bawah masih menjelaskan fitur yang sudah ada dari PRD lama.
 
 ```
-Browser ──HTTPS 443──> Nginx (container) ──> Gunicorn/Django (container, 127.0.0.1:8000) ──> MariaDB (host, 127.0.0.1:3306)
+Browser ──HTTPS 443──> Nginx Proxy Manager ──> sik_nginx :80 (host 8040) ──> sik_web Gunicorn :8000 ──> sik_db MariaDB 10.11
 ```
 
 ## Struktur
@@ -110,23 +110,40 @@ Petugas juga melayani pemohon yang datang ke kantor lewat **Layanan berbantuan**
 Setiap jenis izin punya batas layanan (hari, diatur di `/admin/`). Jalankan harian lewat cron:
 
 ```cron
-0 7 * * 1-5 cd /opt/sik && docker compose exec -T web python manage.py pengingat_sla
+0 7 * * 1-5 docker exec sik_web python manage.py pengingat_sla
 ```
 
-## Deployment di server
+## Deployment di server (pola SIMBAK / E-Office)
+
+SIK berjalan berdampingan dengan aplikasi lain di belakang **Nginx Proxy Manager** (NPM, container
+`proxy-npm-1`). NPM memegang domain dan HTTPS; SIK punya container sendiri dengan awalan `sik`:
+
+| Container | Isi | Port host |
+| --- | --- | --- |
+| `sik_db` | MariaDB 10.11, volume `sik_db_data` | - |
+| `sik_web` | Django + Gunicorn :8000 (migrate dan collectstatic saat start) | - |
+| `sik_nginx` | Nginx internal: static, berkas pemohon via X-Accel, batas login | `8040` (`SIK_PORT`) |
 
 ```bash
-sudo bash scripts/install-docker.sh          # lewati otomatis bila Docker sudah ada
-cp .env.example .env && nano .env            # isi SECRET_KEY, host, SITUS_URL, password, SMTP
-sudo bash scripts/setup-mariadb.sh           # memakai DB_* dari .env
-bash scripts/gen-selfsigned-cert.sh perizinan.example.go.id
-sudo install -d -o 1000 -g 1000 media        # container berjalan sebagai uid 1000
+cd /srv && git clone https://github.com/krisnapranata/sik-perizinan.git && cd sik-perizinan
+cp deploy/env.production.contoh .env.production && nano .env.production   # SECRET_KEY, domain, DB, SMTP
+cp deploy/env.db.contoh .env.db && nano .env.db                            # sandi sama dengan DB_PASSWORD
+chmod 600 .env.production .env.db
+docker inspect proxy-npm-1 -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
+#   bila bukan proxy_default: echo NPM_NETWORK=<nama> > .env
 docker compose up -d --build
+docker compose ps                                  # sik_db dan sik_web "healthy"
+curl -fsS http://127.0.0.1:8040/sehat/
 docker compose exec web python manage.py createsuperuser
-docker compose logs -f web
 ```
 
-Buka `https://<ip-atau-domain-server>`. Port 80, 443, dan 8000 di server harus kosong.
+Di NPM buat **Proxy Host**: domain → scheme `http`, host `sik_nginx`, port `80`. Tab SSL: minta
+sertifikat Let's Encrypt, aktifkan **Force SSL** dan **HSTS**. Tab Advanced:
+`client_max_body_size 30m;`. Domain yang sama harus ada di `DJANGO_ALLOWED_HOSTS`,
+`DJANGO_CSRF_TRUSTED_ORIGINS` (dengan `https://`), dan `SITUS_URL`.
+
+Memperbarui: `git pull && docker compose up -d --build`. **Cadangkan database dulu** bila pembaruan
+memuat migrasi. Jangan jalankan `docker compose down -v` karena menghapus volume database dan berkas.
 
 Setelah masuk, Admin Sistem membuat akun Petugas DPMPTSP, Pimpinan, dan Instansi Teknis di
 `/admin/` (akun instansi wajib memilih instansinya), lalu memeriksa instansi teknis, jenis izin,
@@ -134,45 +151,38 @@ daftar syarat KKPR, dan template email.
 Untuk memindahkan banyak akun sekaligus dari sistem lama, buka **Pengguna → Impor CSV / Excel**
 (`/admin/akun/user/impor/`). Berkas `.csv` atau `.xlsx` berisi kolom `email`, `password`, `nama`,
 `peran`, dan data profil pemohon; template bisa diunduh di halaman itu. Password yang kosong diisi
-password default (`IMPOR_PASSWORD_DEFAULT` di `.env`, bisa diubah saat mengunggah). Data awalnya berasal dari PRD;
-daftar syarat final mengikuti ketetapan dinas.
+password default (`IMPOR_PASSWORD_DEFAULT` di `.env.production`, bisa diubah saat mengunggah).
+Data awalnya berasal dari PRD; daftar syarat final mengikuti ketetapan dinas.
 
 Tanpa `EMAIL_HOST`, email hanya tercetak di log, sehingga pemohon mandiri tidak menerima kode OTP
 dan tidak bisa mengaktifkan akun. Isi SMTP sebelum go-live.
 
-## Ganti ke Let's Encrypt (setelah domain mengarah ke server)
-
-Hook membuat perpanjangan otomatis bekerja: certbot menghentikan Nginx sebentar agar port 80
-bebas, menyalin sertifikat baru, lalu menyalakan Nginx lagi.
-
-```bash
-D=perizinan.example.go.id
-sudo apt install -y certbot
-sudo certbot certonly --standalone -d "$D" \
-  --pre-hook  "docker compose -f $PWD/docker-compose.yml stop nginx" \
-  --deploy-hook "cp /etc/letsencrypt/live/$D/fullchain.pem /etc/letsencrypt/live/$D/privkey.pem $PWD/nginx/certs/" \
-  --post-hook "docker compose -f $PWD/docker-compose.yml start nginx"
-```
-
 ## Cadangan
 
-`scripts/backup.sh` mencadangkan database dan folder `media/`. Tujuan harus berada di disk lain
-atau mount jaringan. Contoh crontab sesuai PRD (database harian, berkas mingguan):
+`scripts/backup.sh` mencadangkan database (dari `sik_db`) dan berkas pemohon (volume media lewat
+`sik_web`). Tujuan harus berada di disk lain atau mount jaringan. Contoh crontab sesuai PRD
+(database harian, berkas mingguan):
 
 ```cron
-0 1 * * * cd /opt/sik && bash scripts/backup.sh /mnt/cadangan/sik db
-0 2 * * 0 cd /opt/sik && bash scripts/backup.sh /mnt/cadangan/sik berkas
+0 1 * * * cd /srv/sik-perizinan && bash scripts/backup.sh /mnt/cadangan/sik db
+0 2 * * 0 cd /srv/sik-perizinan && bash scripts/backup.sh /mnt/cadangan/sik berkas
 ```
 
-Pemulihan: `gunzip -c sik-<waktu>.sql.gz | mariadb -u sik -p sik` dan
-`tar -xzf media-<waktu>.tar.gz -C /opt/sik`. Mesin perlu klien `mariadb-dump`.
+Pemulihan:
+
+```bash
+gunzip -c sik-<waktu>.sql.gz | docker exec -i sik_db sh -c 'MYSQL_PWD="$MARIADB_PASSWORD" mariadb -u "$MARIADB_USER" "$MARIADB_DATABASE"'
+docker exec -i sik_web tar -xzf - -C /app < media-<waktu>.tar.gz
+```
 
 ## Catatan keamanan
 
-- User `sik`/`sik` hanya untuk pengembangan. Ganti `DB_PASSWORD` di `.env`, lalu jalankan ulang
-  `scripts/setup-mariadb.sh`.
-- MariaDB harus listen hanya di `127.0.0.1`. `setup-mariadb.sh` memberi peringatan bila tidak.
-- Port yang dibuka di firewall hanya 80 dan 443.
+- `.env.production` dan `.env.db` berisi rahasia: tidak di-commit, izin berkas `600`.
+- `sik_db` dan `sik_web` tidak membuka port ke host; hanya `sik_nginx` (8040). Port 8040 cukup
+  dijangkau NPM, jadi tutup dari luar di firewall (yang dibuka hanya 80 dan 443 milik NPM).
+- `sik_nginx` hanya mempercayai `X-Real-IP` dari jaringan privat (NPM/Docker), sehingga batas
+  percobaan login dihitung per IP asli pengguna.
+- User `sik`/`sik` di `.env.example` hanya untuk mesin pengembang (`scripts/setup-mariadb.sh`).
 - Riwayat verifikasi dan log audit tidak bisa diubah atau dihapus dari aplikasi.
 - Jangan menyalin database pengembangan ke server. Bila terpaksa, hapus dulu semua akun
   `@sik.test` dari akun demo.

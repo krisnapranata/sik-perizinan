@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# KHUSUS MESIN PENGEMBANG (produksi memakai container sik_db).
 # Memasang MariaDB (bila belum ada) dan membuat database + user aplikasi.
 # Nilai DB_NAME, DB_USER, DB_PASSWORD dibaca dari .env (bila ada), lalu bawaan sik/sik/sik.
 # Jalankan ulang setelah mengganti password di .env agar MariaDB ikut berubah.

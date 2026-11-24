@@ -12,7 +12,5 @@ backups/
 .ruff_cache/
 .vscode/
 .claude/
-nginx/certs/*.pem
-nginx/certs/*.key
 # Data uji berisi data usaha asli dari OSS
 Data_Uji_aplikasi.xlsx

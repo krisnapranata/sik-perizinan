@@ -10,7 +10,7 @@ __pycache__/
 .claude/
 .vscode/
 .ruff_cache/
-nginx/
+deploy/
 scripts/
 media/
 staticfiles/
