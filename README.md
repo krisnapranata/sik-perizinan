@@ -153,40 +153,143 @@ SIK berjalan berdampingan dengan aplikasi lain di belakang **Nginx Proxy Manager
 | `sik_web` | Django + Gunicorn :8000 (migrate dan collectstatic saat start) | - |
 | `sik_nginx` | Nginx internal: static, berkas pemohon via X-Accel, batas login | `8040` (`SIK_PORT`) |
 
+### 0. Persiapan
+
+- Domain/subdomain (mis. `perizinan.lomboktimurkab.go.id`) sudah diarahkan (record A) ke IP server.
+- Akun email pengirim untuk OTP sudah siap ([docs/PANDUAN_EMAIL.md](docs/PANDUAN_EMAIL.md)).
+- Port 8040 masih kosong: `ss -ltn | grep 8040` tidak menampilkan apa pun. Bila terpakai, pakai port
+  lain lewat `SIK_PORT=<port>` di berkas `.env` (folder ini).
+
+### 1. Ambil kode
+
 ```bash
-cd /srv && git clone https://github.com/krisnapranata/sik-perizinan.git && cd sik-perizinan
-cp deploy/env.production.contoh .env.production && nano .env.production   # SECRET_KEY, domain, DB, SMTP
-cp deploy/env.db.contoh .env.db && nano .env.db                            # sandi sama dengan DB_PASSWORD
+cd /srv
+git clone https://github.com/krisnapranata/sik-perizinan.git
+cd sik-perizinan
+```
+
+Bila repo privat, git meminta login: isi username GitHub dan, untuk password, **Personal Access Token**
+(bukan password akun GitHub).
+
+### 2. Siapkan berkas rahasia
+
+```bash
+cp deploy/env.production.contoh .env.production
+cp deploy/env.db.contoh .env.db
+python3 -c "import secrets; print(secrets.token_urlsafe(50))"   # untuk DJANGO_SECRET_KEY
+python3 -c "import secrets; print(secrets.token_urlsafe(24))"   # untuk sandi database
+nano .env.db
+nano .env.production
 chmod 600 .env.production .env.db
+```
+
+`.env.db`: isi `MARIADB_PASSWORD` dan `MARIADB_ROOT_PASSWORD` dengan sandi acak.
+
+`.env.production`:
+
+| Variabel | Isi |
+| --- | --- |
+| `DJANGO_SECRET_KEY` | hasil perintah pertama di atas |
+| `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1,<domain>` (127.0.0.1 dan localhost wajib tetap ada untuk healthcheck) |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://<domain>` |
+| `SITUS_URL` | `https://<domain>` (dipakai tautan di email dan QR dokumen izin) |
+| `DB_PASSWORD` | **sama persis** dengan `MARIADB_PASSWORD` di `.env.db` |
+| `EMAIL_*` | sesuai [docs/PANDUAN_EMAIL.md](docs/PANDUAN_EMAIL.md) |
+| `IMPOR_PASSWORD_DEFAULT` | password awal pengguna hasil impor (wajib diganti saat pertama masuk) |
+| `GOOGLE_MAPS_API_KEY` | boleh kosong (lihat Pusat Informasi Investasi) |
+
+`.env.production` dan `.env.db` tidak pernah di-commit (sudah ada di `.gitignore`).
+
+### 3. Cek nama network NPM
+
+```bash
 docker inspect proxy-npm-1 -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
-#   bila bukan proxy_default: echo NPM_NETWORK=<nama> > .env
+```
+
+Bila hasilnya `proxy_default`, tidak perlu apa-apa. Bila lain: `echo NPM_NETWORK=<nama_network> > .env`.
+
+### 4. Jalankan
+
+```bash
 docker compose up -d --build
-docker compose ps                                  # sik_db dan sik_web "healthy"
-curl -fsS http://127.0.0.1:8040/sehat/
+docker compose ps                        # sik_db dan sik_web "healthy", sik_nginx "Up"
+curl -fsS http://127.0.0.1:8040/sehat/   # {"status": "ok"}
+docker compose logs --tail=50 web        # migrasi OK, gunicorn jalan, tanpa traceback
+```
+
+Migrasi berjalan otomatis dan mengisi data awal: kecamatan, instansi teknis, jenis izin KKPR beserta
+syaratnya, dan template email.
+
+### 5. Buat Admin Sistem pertama
+
+```bash
 docker compose exec web python manage.py createsuperuser
 ```
 
-Di NPM buat **Proxy Host**: domain → scheme `http`, host `sik_nginx`, port `80`. Tab SSL: minta
-sertifikat Let's Encrypt, aktifkan **Force SSL** dan **HSTS**. Tab Advanced:
-`client_max_body_size 30m;`. Domain yang sama harus ada di `DJANGO_ALLOWED_HOSTS`,
-`DJANGO_CSRF_TRUSTED_ORIGINS` (dengan `https://`), dan `SITUS_URL`.
+Isi email, nama, dan password; akun ini otomatis berperan Admin Sistem. Jangan menjalankan
+`buat_akun_demo` di server (perintah itu menolak berjalan bila `DJANGO_DEBUG` bukan 1).
 
-Memperbarui: `git pull && docker compose up -d --build`. **Cadangkan database dulu** bila pembaruan
-memuat migrasi. Jangan jalankan `docker compose down -v` karena menghapus volume database dan berkas.
+### 6. Uji email
 
-Setelah masuk, Admin Sistem membuat akun Petugas DPMPTSP, Pimpinan, dan Instansi Teknis di
-`/admin/` (akun instansi wajib memilih instansinya), lalu memeriksa instansi teknis, jenis izin,
-daftar syarat KKPR, dan template email.
-Untuk memindahkan banyak akun sekaligus dari sistem lama, buka **Pengguna → Impor CSV / Excel**
-(`/admin/akun/user/impor/`). Berkas `.csv` atau `.xlsx` berisi kolom `email`, `password`, `nama`,
-`peran`, dan data profil pemohon; template bisa diunduh di halaman itu. Password yang kosong diisi
-password default (`IMPOR_PASSWORD_DEFAULT` di `.env.production`, bisa diubah saat mengunggah).
-Data awalnya berasal dari PRD; daftar syarat final mengikuti ketetapan dinas.
+```bash
+docker compose exec web python manage.py sendtestemail alamat.anda@contoh.com
+```
 
-Tanpa `EMAIL_HOST`, email hanya tercetak di log, sehingga pemohon mandiri tidak menerima kode OTP
-dan tidak bisa mengaktifkan akun. Isi SMTP sebelum go-live.
-Langkah membuat sandi aplikasi Gmail atau memakai email dinas ada di
+Bila gagal, cocokkan pesan galatnya dengan tabel *Masalah umum* di
 [docs/PANDUAN_EMAIL.md](docs/PANDUAN_EMAIL.md).
+
+### 7. Pasang domain di Nginx Proxy Manager
+
+**Hosts → Proxy Hosts → Add Proxy Host**:
+
+- **Details**: Domain Names = domain; Scheme `http`; Forward Hostname `sik_nginx`; Forward Port `80`;
+  centang **Block Common Exploits**.
+- **SSL**: Request a new SSL Certificate (Let's Encrypt), centang **Force SSL**, **HTTP/2**, **HSTS**.
+- **Advanced**: `client_max_body_size 30m;`
+- Jangan aktifkan **Cache Assets**: aturan cache CSS/JS sudah diatur oleh `sik_nginx`.
+
+Buka `https://<domain>` dan masuk dengan akun admin tadi.
+
+### 8. Pengisian awal oleh Admin Sistem
+
+1. **Pengaturan sistem → Pengguna**: buat akun Petugas DPMPTSP, Pimpinan, dan Instansi Teknis (akun
+   instansi wajib memilih instansinya). Untuk banyak akun sekaligus, buka **Impor pengguna**
+   (`/admin/akun/user/impor/`): berkas `.csv`/`.xlsx` berisi kolom `email`, `password`, `nama`, `peran`,
+   dan data profil pemohon; templatnya bisa diunduh di halaman itu. Password kosong diisi
+   `IMPOR_PASSWORD_DEFAULT` (bisa diubah saat mengunggah).
+2. Periksa **Jenis izin** (syarat, batas waktu layanan, perlu penilaian teknis) dan **Template email**.
+   Data awal berasal dari PRD; daftar syarat final mengikuti ketetapan dinas.
+3. Isi **Potensi dan peluang investasi** beserta titik koordinatnya.
+4. Menu **Panduan aplikasi** menjelaskan setiap fitur untuk presentasi dan serah terima.
+
+Tanpa `EMAIL_HOST`, email hanya tercetak di log: pemohon mandiri tidak menerima kode OTP dan tidak bisa
+mengaktifkan akun. Isi SMTP sebelum go-live.
+
+### 9. Jadwal otomatis (cron di server)
+
+`crontab -e`, lalu tambahkan:
+
+```cron
+0 7 * * 1-5 docker exec sik_web python manage.py pengingat_sla
+0 1 * * * cd /srv/sik-perizinan && bash scripts/backup.sh /mnt/cadangan/sik db
+0 2 * * 0 cd /srv/sik-perizinan && bash scripts/backup.sh /mnt/cadangan/sik berkas
+```
+
+Ganti `/mnt/cadangan/sik` dengan folder di disk lain atau mount jaringan, bukan disk yang sama dengan
+server. Penjelasan dan cara pemulihan ada di bagian **Cadangan**.
+
+### Memperbarui aplikasi
+
+```bash
+cd /srv/sik-perizinan
+bash scripts/backup.sh /mnt/cadangan/sik db   # cadangkan dulu bila pembaruan memuat migrasi
+git pull && docker compose up -d --build
+docker compose ps                             # pastikan kembali "healthy"
+```
+
+Setelah mengubah `.env.production`, jalankan `docker compose up -d web` (perintah `restart` tidak
+membaca ulang berkas env). **Jangan pernah** menjalankan `docker compose down -v`: perintah itu
+menghapus volume database dan semua berkas pemohon.
 
 ## Cadangan
 
