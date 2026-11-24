@@ -202,11 +202,35 @@ class PemohonTanpaData(DasarUji):
 
 
 class PerintahAkunDemo(DasarUji):
-    def test_ditolak_saat_debug_mati(self):
+    def test_production_tanpa_password_ditolak_bila_tidak_interaktif(self):
+        from io import StringIO
+        from unittest import mock
+
         from django.core.management import CommandError, call_command
 
-        with self.assertRaises(CommandError):
-            call_command("buat_akun_demo")
+        with mock.patch("sys.stdin.isatty", return_value=False), self.assertRaises(CommandError):
+            call_command("buat_akun_demo", stdout=StringIO())
+        self.assertFalse(User.objects.filter(email="admin@sik.test").exists())
+
+    def test_production_menolak_demo123_dan_password_lemah(self):
+        from io import StringIO
+
+        from django.core.management import CommandError, call_command
+
+        for lemah in ("demo123", "12345678"):
+            with self.assertRaises(CommandError):
+                call_command("buat_akun_demo", password=lemah, stdout=StringIO())
+        self.assertFalse(User.objects.filter(email="admin@sik.test").exists())
+
+    def test_production_dengan_password_sendiri(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        call_command("buat_akun_demo", password="Presentasi-Lotim-2026", stdout=StringIO())
+        admin = User.objects.get(email="admin@sik.test")
+        self.assertTrue(admin.check_password("Presentasi-Lotim-2026"))
+        self.assertFalse(admin.check_password("demo123"))
 
     def test_membuat_akun_dan_bisa_dijalankan_ulang(self):
         from io import StringIO

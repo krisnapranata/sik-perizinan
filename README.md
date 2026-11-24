@@ -101,10 +101,11 @@ python manage.py buat_akun_demo
 
 Perintah ini membuat akun di bawah, satu permohonan KKPR Nonberusaha contoh yang sudah diajukan,
 dan tiga contoh potensi investasi bertanda "(contoh)" untuk mencoba peta.
-Aman dijalankan ulang: akun yang sudah ada tidak dibuat ganda, tetapi passwordnya disetel ulang ke `demo123`. Perintah ini **menolak berjalan bila
-`DJANGO_DEBUG` bukan 1**, jadi tidak bisa membuat akun berpassword lemah di server produksi.
+Aman dijalankan ulang: akun yang sudah ada tidak dibuat ganda, tetapi passwordnya disetel ulang.
+Di komputer pengembang (`DJANGO_DEBUG=1`) password semua akun demo `demo123`. Di server production
+password wajib ditentukan sendiri (lihat langkah 5b di bagian Deployment).
 
-| Email | Password | Peran (PRD bagian 3) |
+| Email | Password (lokal) | Peran (PRD bagian 3) |
 | --- | --- | --- |
 | `pemohon@sik.test` | `demo123` | Pemohon |
 | `petugas@sik.test` | `demo123` | Petugas DPMPTSP (front office dan verifikator) |
@@ -228,6 +229,24 @@ docker compose exec web python manage.py createsuperuser
 
 Isi email, nama, dan password; akun ini otomatis berperan Admin Sistem. Jangan menjalankan
 `buat_akun_demo` di server (perintah itu menolak berjalan bila `DJANGO_DEBUG` bukan 1).
+
+### 5b. Data demo di server (opsional, untuk presentasi)
+
+```bash
+docker compose exec web python manage.py buat_akun_demo
+```
+
+Perintah ini menanyakan password untuk **semua** akun demo (tidak tampil di layar), lalu membuat akun
+`pemohon@`, `petugas@`, `pupr@`, `pimpinan@`, dan `admin@sik.test`, satu permohonan KKPR contoh, dan tiga
+contoh potensi investasi bertanda "(contoh)". Masuk ke `https://<domain>/akun/masuk/` dengan email itu
+dan password yang baru Anda ketik.
+
+- `demo123` dan password lemah ditolak: `demo123` tertulis di README publik, dan `admin@sik.test`
+  berperan Admin Sistem.
+- Contoh investasi langsung tampil di halaman publik `/investasi/`, dan email notifikasi permohonan
+  contoh dikirim ke alamat `@sik.test` yang tidak ada (email itu memantul ke kotak surat pengirim).
+- Setelah presentasi: nonaktifkan akun `@sik.test` di **Pengaturan sistem → Pengguna** (hapus centang
+  *Aktif*), dan hapus centang **Tampil di portal** pada contoh investasi.
 
 ### 6. Uji email
 

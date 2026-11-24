@@ -1,6 +1,18 @@
-"""Akun demo untuk mencoba alur lengkap di komputer pengembang. Ditolak bila DEBUG mati."""
+"""Akun dan data demo untuk mencoba alur lengkap.
+
+Komputer pengembang (DJANGO_DEBUG=1): password semua akun demo `demo123`.
+Server production (DEBUG mati): password WAJIB ditentukan sendiri, karena `demo123` tertulis di README
+publik dan akun admin@sik.test berperan Admin Sistem:
+
+    docker compose exec web python manage.py buat_akun_demo          # ditanya password (tidak tampil)
+"""
+
+import getpass
+import sys
 
 from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -12,7 +24,7 @@ from perizinan import services
 from perizinan.forms import FormulirForm
 from perizinan.models import JenisIzin
 
-PASSWORD = "demo123"
+PASSWORD_PENGEMBANGAN = "demo123"
 
 PETUGAS = [
     ("petugas@sik.test", "Baiq Nurul Aini", Peran.PETUGAS, "Front Office dan Verifikasi"),
@@ -59,11 +71,20 @@ def _pdf(nama):
 
 
 class Command(BaseCommand):
-    help = "Membuat akun demo semua peran dan satu permohonan KKPR contoh (hanya saat DEBUG=1)."
+    help = (
+        "Membuat akun demo semua peran, satu permohonan KKPR contoh, dan contoh potensi investasi. "
+        "Di production password wajib ditentukan sendiri."
+    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--password",
+            help="Password semua akun demo. Di production lebih aman dikosongkan agar ditanya "
+                 "tanpa tampil di layar dan riwayat shell.",
+        )
 
     def handle(self, *args, **options):
-        if not settings.DEBUG:
-            raise CommandError("Ditolak: akun demo hanya untuk pengembangan (DJANGO_DEBUG=1).")
+        self.password = self._tentukan_password(options.get("password"))
 
         with transaction.atomic():
             for email, nama, peran, unit in PETUGAS:
@@ -108,12 +129,38 @@ class Command(BaseCommand):
                 if baru:
                     self.stdout.write(f"Contoh investasi dibuat: {data['nama']}")
 
-        self.stdout.write(self.style.SUCCESS(f"Akun demo siap. Password semua akun: {PASSWORD}"))
+        if settings.DEBUG:
+            self.stdout.write(self.style.SUCCESS(f"Akun demo siap. Password semua akun: {self.password}"))
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                "Akun demo siap dengan password yang Anda tentukan. Nonaktifkan akun @sik.test di "
+                "Pengaturan sistem → Pengguna bila demo sudah selesai."
+            ))
+
+    def _tentukan_password(self, password):
+        if settings.DEBUG:
+            return password or PASSWORD_PENGEMBANGAN
+        if not password:
+            if not sys.stdin.isatty():
+                raise CommandError(
+                    "Di production password akun demo wajib ditentukan. Jalankan dengan terminal "
+                    "interaktif (docker compose exec web python manage.py buat_akun_demo) atau --password."
+                )
+            password = getpass.getpass("Password untuk semua akun demo: ")
+            if password != getpass.getpass("Ulangi password: "):
+                raise CommandError("Password tidak sama.")
+        if password == PASSWORD_PENGEMBANGAN:
+            raise CommandError("Ditolak: 'demo123' tertulis di README publik. Pakai password lain.")
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            raise CommandError("Password terlalu lemah: " + " ".join(e.messages)) from None
+        return password
 
     def _akun(self, email, nama, **kolom):
         user, baru = User.objects.get_or_create(email=email, defaults={"nama": nama, **kolom})
         # Selalu disetel ulang agar akun demo lama ikut memakai password yang sama.
-        user.set_password(PASSWORD)
+        user.set_password(self.password)
         user.save()
         self.stdout.write(
             f"{'Dibuat ' if baru else 'Sudah ada'}: {email} ({user.get_peran_display()})"
