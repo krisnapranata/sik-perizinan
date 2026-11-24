@@ -233,20 +233,38 @@ Isi email, nama, dan password; akun ini otomatis berperan Admin Sistem. Jangan m
 ### 5b. Data demo di server (opsional, untuk presentasi)
 
 ```bash
-docker compose exec web python manage.py buat_akun_demo
+docker compose exec web python manage.py buat_akun_demo           # buat data demo
+docker compose exec web python manage.py buat_akun_demo --reset   # kembali ke keadaan awal demo
+docker compose exec web python manage.py buat_akun_demo --hapus   # buang data demo (sebelum go-live)
 ```
 
-Perintah ini menanyakan password untuk **semua** akun demo (tidak tampil di layar), lalu membuat akun
-`pemohon@`, `petugas@`, `pupr@`, `pimpinan@`, dan `admin@sik.test`, satu permohonan KKPR contoh, dan tiga
-contoh potensi investasi bertanda "(contoh)". Masuk ke `https://<domain>/akun/masuk/` dengan email itu
-dan password yang baru Anda ketik.
+**Membuat.** Perintah pertama menanyakan password untuk **semua** akun demo (tidak tampil di layar), lalu
+membuat akun `pemohon@`, `petugas@`, `pupr@`, `pimpinan@`, dan `admin@sik.test`, satu permohonan KKPR
+contoh berstatus *Diajukan*, dan tiga contoh potensi investasi bertanda "(contoh)". Masuk ke
+`https://<domain>/akun/masuk/` dengan email itu dan password yang baru Anda ketik. `demo123` dan
+password lemah ditolak: `demo123` tertulis di README publik, dan `admin@sik.test` berperan Admin Sistem.
 
-- `demo123` dan password lemah ditolak: `demo123` tertulis di README publik, dan `admin@sik.test`
-  berperan Admin Sistem.
-- Contoh investasi langsung tampil di halaman publik `/investasi/`, dan email notifikasi permohonan
-  contoh dikirim ke alamat `@sik.test` yang tidak ada (email itu memantul ke kotak surat pengirim).
-- Setelah presentasi: nonaktifkan akun `@sik.test` di **Pengaturan sistem → Pengguna** (hapus centang
-  *Aktif*), dan hapus centang **Tampil di portal** pada contoh investasi.
+**Reset (`--reset`).** Setelah latihan atau presentasi, data demo kembali seperti awal: permohonan contoh
+beserta dokumen, riwayat, penilaian, izin, dan catatan Database NonOSS-nya dihapus, lalu dibuat ulang
+berstatus *Diajukan*; contoh investasi dibuat ulang; akun demo diaktifkan lagi dengan password baru.
+Perintah meminta Anda mengetik `HAPUS` sebagai konfirmasi (`--ya` untuk melewatinya, mis. di cron).
+
+**Hapus (`--hapus`).** Membuang data demo yang sama dan menonaktifkan kelima akun demo. Akun tidak dihapus
+karena log audit merujuk ke akun itu; `--reset` mengaktifkannya kembali.
+
+Batasan yang perlu diketahui:
+
+- Reset dan hapus **hanya** menyentuh permohonan milik `pemohon@sik.test` dan tiga contoh investasi
+  bernama persis. Permohonan pemohon asli tidak pernah ikut terhapus, termasuk yang pernah diproses
+  akun petugas demo.
+- Izin dari permohonan demo bernomor `DEMO-<nomor registrasi>` dan **tidak** memakai urutan nomor izin
+  resmi, jadi tidak ada nomor resmi yang bolong setelah reset.
+- Akun yang Anda daftarkan sendiri saat demo (langkah *Pendaftaran* dengan email sungguhan) dan
+  permohonannya **tidak** ikut terhapus. Nonaktifkan manual di **Pengaturan sistem → Pengguna**.
+- Selama ada, data demo ikut terhitung di statistik dan laporan bulanan. Jalankan `--reset` atau
+  `--hapus` setelah presentasi. Log audit kegiatan demo tetap tersimpan.
+- Email notifikasi permohonan contoh dikirim ke alamat `@sik.test` yang tidak ada (memantul ke kotak surat
+  pengirim).
 
 ### 6. Uji email
 

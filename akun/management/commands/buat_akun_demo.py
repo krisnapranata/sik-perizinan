@@ -5,6 +5,10 @@ Server production (DEBUG mati): password WAJIB ditentukan sendiri, karena `demo1
 publik dan akun admin@sik.test berperan Admin Sistem:
 
     docker compose exec web python manage.py buat_akun_demo          # ditanya password (tidak tampil)
+    docker compose exec web python manage.py buat_akun_demo --reset  # kembali ke keadaan awal demo
+    docker compose exec web python manage.py buat_akun_demo --hapus  # buang data demo, nonaktifkan akun
+
+--reset dan --hapus hanya menyentuh data demo (lihat akun/demo.py), tidak pernah data asli.
 """
 
 import getpass
@@ -17,6 +21,7 @@ from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from akun import demo
 from akun.models import Instansi, Pemohon, Peran, User
 from basisdata.models import Kecamatan
 from investasi.models import PeluangInvestasi, Tingkat
@@ -77,6 +82,17 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
+        aksi = parser.add_mutually_exclusive_group()
+        aksi.add_argument(
+            "--reset", action="store_true",
+            help="Hapus data demo (permohonan contoh beserta dokumen, riwayat, izin; contoh investasi) "
+                 "lalu buat ulang seperti awal. Akun demo diaktifkan ulang.",
+        )
+        aksi.add_argument(
+            "--hapus", action="store_true",
+            help="Hapus data demo dan nonaktifkan akun demo (misalnya sebelum go-live).",
+        )
+        parser.add_argument("--ya", action="store_true", help="Lewati pertanyaan konfirmasi.")
         parser.add_argument(
             "--password",
             help="Password semua akun demo. Di production lebih aman dikosongkan agar ditanya "
@@ -84,7 +100,17 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if options["hapus"] or options["reset"]:
+            self._konfirmasi(options["ya"])
+        if options["hapus"]:
+            self._laporkan_hapus(demo.hapus_data_demo())
+            jumlah = User.objects.filter(email__in=demo.EMAIL_DEMO, is_active=True).update(is_active=False)
+            self.stdout.write(self.style.SUCCESS(f"{jumlah} akun demo dinonaktifkan."))
+            return
+
         self.password = self._tentukan_password(options.get("password"))
+        if options["reset"]:
+            self._laporkan_hapus(demo.hapus_data_demo())
 
         with transaction.atomic():
             for email, nama, peran, unit in PETUGAS:
@@ -133,9 +159,27 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Akun demo siap. Password semua akun: {self.password}"))
         else:
             self.stdout.write(self.style.SUCCESS(
-                "Akun demo siap dengan password yang Anda tentukan. Nonaktifkan akun @sik.test di "
-                "Pengaturan sistem → Pengguna bila demo sudah selesai."
+                "Akun demo siap dengan password yang Anda tentukan. Kembali ke awal: --reset. "
+                "Selesai demo: --hapus."
             ))
+
+    def _konfirmasi(self, ya):
+        if settings.DEBUG or ya:
+            return
+        if not sys.stdin.isatty():
+            raise CommandError("Tambahkan --ya untuk menjalankan tanpa terminal interaktif.")
+        self.stdout.write(
+            "Ini menghapus permohonan contoh milik pemohon@sik.test (beserta dokumen, riwayat, izin, dan "
+            "catatan Database NonOSS-nya) serta contoh investasi. Data asli tidak disentuh."
+        )
+        if input("Ketik HAPUS untuk melanjutkan: ").strip() != "HAPUS":
+            raise CommandError("Dibatalkan.")
+
+    def _laporkan_hapus(self, jumlah):
+        self.stdout.write(
+            f"Data demo dihapus: {jumlah['permohonan']} permohonan contoh, "
+            f"{jumlah['investasi']} contoh investasi."
+        )
 
     def _tentukan_password(self, password):
         if settings.DEBUG:
@@ -161,6 +205,7 @@ class Command(BaseCommand):
         user, baru = User.objects.get_or_create(email=email, defaults={"nama": nama, **kolom})
         # Selalu disetel ulang agar akun demo lama ikut memakai password yang sama.
         user.set_password(self.password)
+        user.is_active = True  # --reset mengaktifkan ulang akun yang dinonaktifkan --hapus
         user.save()
         self.stdout.write(
             f"{'Dibuat ' if baru else 'Sudah ada'}: {email} ({user.get_peran_display()})"

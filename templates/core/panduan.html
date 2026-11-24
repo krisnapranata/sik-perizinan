@@ -234,7 +234,8 @@
 
 <section class="kartu" id="demo"><h2>Skenario demo presentasi (sekitar 25 menit)</h2>
 <p>Urutan ini menunjukkan satu izin dari pengajuan sampai terbit, lalu sisi data dan investasi. Gunakan dua jendela browser: satu biasa, satu penyamaran (incognito), supaya bisa berganti akun cepat.</p>
-<p><b>Persiapan (sebelum hadirin datang):</b> jalankan <span class="kode">python manage.py buat_akun_demo</span> dengan <span class="kode">DJANGO_DEBUG=1</span>. Perintah ini menyiapkan akun demo, satu permohonan KKPR yang sudah diajukan, dan tiga contoh potensi investasi. Uji juga koneksi internet untuk peta.</p>
+<p><b>Persiapan (sebelum hadirin datang):</b> jalankan <span class="kode">buat_akun_demo</span>. Di laptop: <span class="kode">python manage.py buat_akun_demo</span> (password <span class="kode">demo123</span>). Di server: <span class="kode">docker compose exec web python manage.py buat_akun_demo</span> (password ditentukan sendiri). Perintah ini menyiapkan akun demo, satu permohonan KKPR yang sudah diajukan, dan tiga contoh potensi investasi. Uji juga koneksi internet untuk peta.</p>
+<p><b>Sesudah latihan atau presentasi:</b> <span class="kode">buat_akun_demo --reset</span> mengembalikan data demo ke keadaan awal (permohonan contoh kembali berstatus Diajukan), dan <span class="kode">buat_akun_demo --hapus</span> membuang data demo serta menonaktifkan akun demo. Keduanya tidak menyentuh data asli, dan izin demo bernomor <span class="kode">DEMO-...</span> sehingga tidak memakai nomor izin resmi.</p>
 <ol>
   <li><b>Halaman publik (3 menit).</b> Buka beranda, lalu <b>Layanan izin</b>: tunjukkan persyaratan dan alur KKPR. Buka <b>Data perizinan</b> untuk statistik publik.</li>
   <li><b>Pendaftaran (3 menit).</b> Klik <b>Daftar</b>, isi data rekaan dengan email yang bisa dibuka di depan hadirin, lalu masukkan kode OTP yang masuk.</li>
@@ -245,7 +246,7 @@
   <li><b>Database dan laporan (3 menit).</b> Buka <b>Berusaha (OSS-RBA)</b>, terapkan filter kecamatan atau sektor, ekspor ke Excel. Masuk sebagai <span class="kode">pimpinan@sik.test</span> dan buka <b>Laporan layanan</b>.</li>
   <li><b>Investasi (3 menit).</b> Buka <b>Investasi</b>, saring per sektor, klik <b>Lihat di peta</b>, lalu <b>Profil lengkap</b> dan <b>Petunjuk arah</b>. Tutup dengan menunjukkan cara admin menambah konten di <b>Pengaturan sistem</b>.</li>
 </ol>
-<p>Cadangan bila internet putus: email OTP tidak masuk dan peta tidak tampil. Siapkan tangkapan layar kedua langkah itu sebelum presentasi. Permohonan contoh hanya dibuat sekali; kalau sudah terbit saat latihan, ajukan permohonan baru sebagai pemohon sebelum presentasi.</p>
+<p>Cadangan bila internet putus: email OTP tidak masuk dan peta tidak tampil. Siapkan tangkapan layar kedua langkah itu sebelum presentasi. Kalau permohonan contoh sudah terbit saat latihan, jalankan <span class="kode">--reset</span> sebelum presentasi.</p>
 </section>
 
 <section class="kartu" id="status"><h2>Status pengembangan dan rencana berikutnya</h2>

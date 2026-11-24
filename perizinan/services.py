@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from akun import demo
 from akun.models import Peran
 from core.audit import catat
 from perizinan import notifikasi
@@ -269,7 +270,12 @@ def terbitkan(permohonan, pengguna, berkas_ttd=None):
     tanggal = timezone.localdate()
     izin = IzinTerbit(
         permohonan=permohonan,
-        nomor_izin=_nomor_izin_baru(permohonan.jenis_izin, tanggal),
+        # Izin dari data demo tidak memakai urutan nomor resmi (lihat akun/demo.py).
+        nomor_izin=(
+            demo.nomor_izin_demo(permohonan)
+            if demo.adalah_permohonan_demo(permohonan)
+            else _nomor_izin_baru(permohonan.jenis_izin, tanggal)
+        ),
         tanggal_terbit=tanggal,
     )
     izin.berkas.save("izin.pdf", ContentFile(buat_pdf(izin)), save=False)
