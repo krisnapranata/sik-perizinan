@@ -148,7 +148,9 @@ EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1"
+# Port 587 = STARTTLS (EMAIL_USE_TLS=1). Port 465 = SSL langsung (EMAIL_USE_SSL=1). Tidak boleh keduanya.
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "0") == "1"
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1" and not EMAIL_USE_SSL
 EMAIL_TIMEOUT = 10
 DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_FROM", "SIK Perizinan <noreply@localhost>")
 EMAIL_BACKEND = (
@@ -181,10 +183,10 @@ KOP_ALAMAT = os.environ.get("KOP_ALAMAT", "Selong, Lombok Timur, Nusa Tenggara B
 
 # Nomor izin otomatis (PRD IZ-06). Penanda: {urut}, {kode}, {tahun}, {bulan}.
 FORMAT_NOMOR_IZIN = os.environ.get("FORMAT_NOMOR_IZIN", "{urut:04d}/{kode}/DPMPTSP/{tahun}")
-# Pejabat yang tercantum di dokumen izin (tanda tangan tetap sesuai prosedur dinas).
 # Peta Pusat Informasi Investasi. Tanpa kunci, peta tetap tampil lewat embed Google Maps
 # (satu titik sekali tampil). Dengan kunci (Maps JavaScript API + Maps Embed API, dibatasi
 # HTTP referrer ke domain portal), semua titik tampil sekaligus di satu peta.
 GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
 
+# Pejabat yang tercantum di dokumen izin (tanda tangan tetap sesuai prosedur dinas).
 PEJABAT_IZIN = os.environ.get("PEJABAT_IZIN", "Kepala DPMPTSP Kabupaten Lombok Timur")

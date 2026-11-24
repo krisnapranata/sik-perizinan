@@ -21,3 +21,4 @@ PRD*.md
 Design_System_*.md
 docker-compose*.yml
 Dockerfile
+docs/

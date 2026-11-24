@@ -2,7 +2,6 @@ import secrets
 
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.db import transaction
 from django.urls import reverse
 from django.utils.encoding import force_bytes
@@ -11,6 +10,7 @@ from django.utils.http import urlsafe_base64_encode
 from akun import otp
 from akun.models import Pemohon, Peran, User
 from core.audit import catat
+from core.surel import kirim_setelah_commit
 
 
 def _tautan(nama_url, pengguna):
@@ -20,9 +20,7 @@ def _tautan(nama_url, pengguna):
 
 
 def _kirim(pengguna, subjek, isi):
-    transaction.on_commit(
-        lambda: send_mail(subjek, isi, None, [pengguna.email], fail_silently=True)
-    )
+    kirim_setelah_commit(subjek, isi, [pengguna.email], subjek)
 
 
 @transaction.atomic

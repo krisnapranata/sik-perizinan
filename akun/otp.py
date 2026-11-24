@@ -6,11 +6,11 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
 from akun.models import KodeOTP
+from core.surel import kirim_setelah_commit
 
 BERLAKU = timedelta(minutes=15)
 MAKS_PERCOBAAN = 5
@@ -39,10 +39,7 @@ def kirim(pengguna):
         f"Kode berlaku {int(BERLAKU.total_seconds() // 60)} menit. "
         "Jangan berikan kode ini kepada siapa pun, termasuk petugas.\n"
     )
-    transaction.on_commit(
-        lambda: send_mail("Kode verifikasi PANDU LOTIM", isi, None, [pengguna.email],
-                          fail_silently=True)
-    )
+    kirim_setelah_commit("Kode verifikasi PANDU LOTIM", isi, [pengguna.email], "kode OTP")
 
 
 def periksa(pengguna, kode):

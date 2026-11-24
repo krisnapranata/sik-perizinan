@@ -178,6 +178,8 @@ Data awalnya berasal dari PRD; daftar syarat final mengikuti ketetapan dinas.
 
 Tanpa `EMAIL_HOST`, email hanya tercetak di log, sehingga pemohon mandiri tidak menerima kode OTP
 dan tidak bisa mengaktifkan akun. Isi SMTP sebelum go-live.
+Langkah membuat sandi aplikasi Gmail atau memakai email dinas ada di
+[docs/PANDUAN_EMAIL.md](docs/PANDUAN_EMAIL.md).
 
 ## Cadangan
 
