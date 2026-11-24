@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block judul %}{{ i }}{% endblock %}
+{% block isi %}
+<div class="kepala">
+  <div><h1>{{ i.jenis.nama }}</h1>
+  <div class="deret" style="margin-top:10px"><span class="lencana {{ i.status }}">{{ i.get_status_display }}</span><span class="chip kode">{{ i.nomor_izin|default:"Belum bernomor" }}</span>{% if i.permohonan %}<span class="chip">Dari permohonan online</span>{% endif %}</div></div>
+  <div class="deret">
+    {% if i.dokumen %}{% url 'basisdata:nonoss_dokumen' i.pk as url_dok %}<a class="tombol garis" href="{{ url_dok }}">{% include "ikon/download.svg" %}Unduh</a>{% if pratinjau %}<a class="tombol garis" href="{{ url_dok }}?tampil=1" data-pratinjau="{{ pratinjau }}" data-judul="Dokumen {{ i }}" data-unduh="{{ url_dok }}">{% include "ikon/eye.svg" %}Lihat dokumen</a>{% endif %}{% endif %}
+    {% if bisa_kelola %}<a class="tombol aksen" href="{% url 'basisdata:nonoss_ubah' i.pk %}">Ubah</a>{% endif %}
+  </div>
+</div>
+<div class="kisi kisi-detail">
+<section class="kartu"><div class="kartu-kepala"><h2>Data izin</h2></div>
+<dl class="data">
+  <dt>Nama pemohon</dt><dd>{{ i.nama_pemohon }}</dd>
+  <dt>NIK</dt><dd class="kode">{{ i.nik|default:"-" }}</dd>
+  <dt>Tanggal permohonan</dt><dd>{{ i.tanggal_permohonan|date:"j F Y" }}</dd>
+  <dt>Tanggal penerbitan</dt><dd>{{ i.tanggal_terbit|date:"j F Y"|default:"-" }}</dd>
+  <dt>Lokasi objek</dt><dd>{% if i.alamat_objek %}{{ i.alamat_objek }}<br>{% endif %}{% if i.kelurahan %}{{ i.kelurahan.nama }}, {% endif %}{{ i.kecamatan.nama }}</dd>
+  <dt>Instansi teknis</dt><dd>{{ i.instansi_teknis|default:"-" }}</dd>
+  <dt>Dokumen</dt><dd>{% if i.dokumen %}Tersedia{% else %}Belum diunggah{% endif %}</dd>
+  <dt>Dicatat oleh</dt><dd>{{ i.dibuat_oleh.nama }}, {{ i.dibuat_pada|date:"j M Y H.i" }}</dd>
+</dl></section>
+<section class="kartu"><div class="kartu-kepala"><h2>Riwayat perubahan</h2></div>
+{% for r in riwayat %}<p class="kecil" style="margin:0 0 10px"><b>{{ r.pengguna.nama|default:"Sistem" }}</b> · <span class="redup">{{ r.waktu|date:"j M Y, H.i" }}</span><br>{% if r.aksi == 'database.nonoss_tambah' %}Data dicatat{% elif r.aksi == 'berkas.unduh' or r.aksi == 'berkas.lihat' %}Dokumen dibuka{% else %}{{ r.keterangan|default:r.aksi }}{% endif %}</p>{% empty %}<p class="redup kecil">Belum ada riwayat.</p>{% endfor %}
+</section>
+</div>
+{% endblock %}

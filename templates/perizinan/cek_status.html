@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block judul %}Cek status{% endblock %}{% block lebar %}lebar{% endblock %}
+{% block isi %}<div class="kepala"><div><h1>Cek status permohonan</h1><p>Masukkan nomor registrasi. Tidak perlu masuk akun.</p></div></div>
+<form class="cek-besar" method="get" role="search" style="margin:0 0 20px;max-width:none"><label class="sr" for="id_nomor">Nomor registrasi</label><input id="id_nomor" name="nomor" maxlength="24" required value="{{ form.nomor.value|default:'' }}" placeholder="SIK-20261108-XXXXXXXX" autocomplete="off" spellcheck="false"><button class="aksen">Cek status</button></form>
+{% if hasil %}<div class="kartu">
+  <div class="kartu-kepala"><div><h2>{{ hasil.jenis_izin.nama }}</h2><p class="kode">{{ hasil.nomor_registrasi }}</p></div><span class="lencana {{ hasil.status }}">{{ hasil.get_status_display }}</span></div>
+  {% if tahapan %}<ol class="langkah" style="margin-bottom:16px">{% for b in tahapan %}<li class="{{ b.kondisi }}"><span class="bulat">{% if b.kondisi == 'sah' %}{% include "ikon/check.svg" %}{% elif b.kondisi == 'coret' %}{% include "ikon/x.svg" %}{% elif b.kondisi == 'aktif' %}{% include "ikon/clock.svg" %}{% else %}{{ forloop.counter }}{% endif %}</span><b>{{ b.tahap }}</b><small>{% if b.hasil %}{{ b.hasil }}{% else %}Belum{% endif %}{% if b.waktu %}<br>{{ b.waktu|date:"j M, H.i" }}{% endif %}</small></li>{% endfor %}</ol>{% endif %}
+  <dl class="data"><dt>Status</dt><dd>{{ hasil.get_status_display }}</dd><dt>Diperbarui</dt><dd>{{ hasil.diperbarui_pada|date:"j F Y, H.i" }}</dd>{% if hasil.batas_layanan and hasil.status != 'terbit' and hasil.status != 'ditolak' %}<dt>Batas layanan</dt><dd>{{ hasil.batas_layanan|date:"j F Y" }}</dd>{% endif %}</dl>
+</div>
+{% elif dicari %}<div class="peringatan"><b>Nomor registrasi tidak ditemukan</b>Periksa kembali penulisannya. Nomor berbentuk SIK-tanggal-kode, misalnya SIK-20261108-JMRQY23E.</div>{% endif %}{% endblock %}

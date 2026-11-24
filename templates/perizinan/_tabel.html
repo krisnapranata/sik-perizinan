@@ -1,0 +1,14 @@
+<div class="gulir"><table class="tabel tumpuk-hp">
+<thead><tr><th>Permohonan</th><th>Pemohon</th><th>Status</th><th>Kecamatan</th><th>{% if antrean %}Batas layanan{% else %}Diperbarui{% endif %}</th></tr></thead>
+<tbody>{% now "U" as sekarang %}{% for p in halaman %}<tr>
+<td class="sel-utama"><a href="{% url 'perizinan:detail' p.nomor_registrasi %}">{{ p.jenis_izin.nama }}</a><small class="kode">{{ p.nomor_registrasi }}</small></td>
+<td class="sel-lain">{{ p.pemohon.nama }}</td>
+<td class="sel-status"><span class="lencana {{ p.status }}">{{ p.get_status_display }}</span></td>
+<td class="sel-lain">{{ p.kecamatan.nama|default:"-" }}</td>
+<td class="sel-lain redup">{% if antrean %}{% if p.batas_layanan %}<span class="{% if p.batas_layanan|date:'U' < sekarang %}lencana ditolak{% endif %}">{{ p.batas_layanan|date:"j M Y" }}{% if p.batas_layanan|date:'U' < sekarang %} · lewat batas{% endif %}</span>{% else %}-{% endif %}{% else %}{{ p.diperbarui_pada|date:"j M Y, H.i" }}{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5" class="kosong">{{ kosong|default:"Belum ada permohonan." }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if halaman.has_other_pages %}<nav class="paginasi" aria-label="Halaman">
+{% if halaman.has_previous %}<a class="tombol garis kecil" href="?halaman={{ halaman.previous_page_number }}">Sebelumnya</a>{% endif %}
+<span class="redup">Halaman {{ halaman.number }} dari {{ halaman.paginator.num_pages }}</span>
+{% if halaman.has_next %}<a class="tombol garis kecil" href="?halaman={{ halaman.next_page_number }}">Berikutnya</a>{% endif %}</nav>{% endif %}

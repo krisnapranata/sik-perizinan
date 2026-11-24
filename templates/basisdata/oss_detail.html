@@ -1,0 +1,49 @@
+{% extends "base.html" %}{% load angka %}{% block judul %}{{ p.pelaku.nama }}{% endblock %}
+{% block isi %}
+<div class="kepala">
+  <div><h1>{{ p.nama_proyek|default:p.pelaku.nama }}</h1>
+  <div class="deret" style="margin-top:10px"><span class="chip kode">{{ p.id_proyek }}</span>{% if p.jenis_proyek %}<span class="chip">Proyek {{ p.jenis_proyek }}</span>{% endif %}<span class="lencana {{ p.status_izin }}">{{ p.get_status_izin_display }}</span></div></div>
+  <a class="tombol garis" href="{% url 'basisdata:oss_daftar' %}">Kembali ke daftar</a>
+</div>
+
+<div class="kisi kisi-detail">
+<div>
+  <section class="kartu"><div class="kartu-kepala"><h2>Proyek</h2></div>
+  <dl class="data">
+    <dt>KBLI</dt><dd>{% if p.kbli %}{{ p.kbli.kode }} — {{ p.kbli.judul }}{% else %}-{% endif %}</dd>
+    <dt>Sektor</dt><dd>{{ p.kbli.get_sektor_display|default:"-" }}</dd>
+    <dt>KL/sektor pembina</dt><dd>{{ p.kbli.kl_pembina|default:"-" }}</dd>
+    <dt>Skala usaha</dt><dd>{{ p.skala|default:"-" }}</dd>
+    <dt>Risiko</dt><dd>{{ p.risiko|default:"-" }}</dd>
+    <dt>Alamat usaha</dt><dd>{{ p.alamat|default:"-" }}</dd>
+    <dt>Lokasi</dt><dd>{% if p.kelurahan %}{{ p.kelurahan.nama }}, {% endif %}{{ p.kecamatan.nama }}{% if p.kab_kota %}, {{ p.kab_kota }}{% endif %}</dd>
+    <dt>Tanggal terbit OSS</dt><dd>{{ p.tanggal_terbit|date:"j F Y"|default:"-" }}</dd>
+    <dt>Tanggal pengajuan proyek</dt><dd>{{ p.tanggal_pengajuan|date:"j F Y"|default:"-" }}</dd>
+    <dt>Luas tanah</dt><dd>{% if p.luas_tanah is not None %}{{ p.luas_tanah|floatformat:"-2" }} {{ p.satuan_tanah }}{% else %}-{% endif %}</dd>
+    <dt>Jumlah investasi</dt><dd>{{ p.investasi|rupiah }}</dd>
+    <dt>Tenaga kerja (TKI)</dt><dd>{{ p.tki|ribuan }}</dd>
+    <dt>Terakhir diimpor</dt><dd>{{ p.diimpor_pada|date:"j M Y, H.i" }}</dd>
+  </dl></section>
+
+  {% if proyek_lain %}<section class="kartu tanpa-isi"><div class="kartu-kepala" style="padding:20px 20px 0"><div><h2>Proyek lain dengan NIB yang sama</h2></div></div>
+  <div class="gulir"><table class="tabel"><thead><tr><th>Proyek</th><th>Kecamatan</th><th class="angka">Investasi</th></tr></thead><tbody>
+  {% for q in proyek_lain %}<tr><td class="sel-utama"><a href="{% url 'basisdata:oss_detail' q.id_proyek %}">{{ q.nama_proyek|default:q.id_proyek }}</a><small class="kode">{{ q.id_proyek }}</small></td><td>{{ q.kecamatan.nama }}</td><td class="angka">{{ q.investasi|rupiah }}</td></tr>{% endfor %}
+  </tbody></table></div></section>{% endif %}
+</div>
+<div>
+  <section class="kartu"><div class="kartu-kepala"><h2>Pelaku usaha</h2></div>
+  <dl class="data">
+    <dt>Nama</dt><dd><a href="{% url 'basisdata:usaha_detail' p.pelaku_id %}">{{ p.pelaku.nama }}</a></dd>
+    <dt>NIB</dt><dd class="kode">{{ p.pelaku_id }}</dd>
+    <dt>Jenis</dt><dd>{{ p.pelaku.jenis_perusahaan|default:"-" }}</dd>
+    <dt>Status PM</dt><dd>{{ p.pelaku.status_pm|default:"-" }}</dd>
+  </dl></section>
+
+  {% if bisa_kelola %}<section class="kartu"><div class="kartu-kepala"><div><h2>Status izin</h2><p>Tidak ada di ekspor OSS; diisi petugas.</p></div></div>
+  <form method="post">{% csrf_token %}{{ form.as_div }}<button class="aksen" style="width:100%">Simpan status</button></form></section>{% endif %}
+
+  <section class="kartu"><div class="kartu-kepala"><h2>Riwayat perubahan</h2></div>
+  {% for r in riwayat %}<p class="kecil" style="margin:0 0 10px"><b>{{ r.pengguna.nama|default:"Sistem" }}</b> · <span class="redup">{{ r.waktu|date:"j M Y, H.i" }}</span><br>{{ r.keterangan|default:r.aksi }}</p>{% empty %}<p class="redup kecil">Belum ada perubahan oleh petugas.</p>{% endfor %}</section>
+</div>
+</div>
+{% endblock %}

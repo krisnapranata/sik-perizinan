@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block judul %}Impor data OSS-RBA{% endblock %}
+{% block isi %}
+<div class="kepala"><div><h1>Impor data OSS-RBA</h1><p>Unggah file ekspor dari OSS. Proyek yang sudah ada (Id Proyek sama) diperbarui, bukan digandakan.</p></div>
+<a class="tombol garis" href="{% url 'basisdata:oss_daftar' %}">Kembali ke daftar</a></div>
+<div class="kisi kisi-detail">
+<section class="kartu"><div class="kartu-kepala"><h2>Unggah file</h2></div>
+<form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_div }}<button class="aksen">{% include "ikon/upload.svg" %}Impor</button></form>
+<div class="pesan jeda"><b>Yang diperiksa saat impor</b><br>
+Kolom wajib: Id Proyek, NIB, Nama Perusahaan, Kecamatan. NIB harus 13 digit dan KBLI 5 digit; nol di depan yang hilang di Excel dilengkapi otomatis.
+Tanggal boleh campuran (04/10/2018, 2018-10-04, atau 6 Juni 2022). Kecamatan harus salah satu dari 21 kecamatan Lombok Timur.
+Baris yang bermasalah dilewati dan dilaporkan; baris lain tetap disimpan. Status izin yang sudah diisi petugas tidak ditimpa.</div>
+</section>
+<section class="kartu"><div class="kartu-kepala"><h2>Impor terakhir</h2></div>
+{% for i in riwayat %}<p class="kecil" style="margin:0 0 12px"><a href="{% url 'basisdata:oss_impor_hasil' i.pk %}"><b>{{ i.nama_berkas }}</b></a><br><span class="redup">{{ i.waktu|date:"j M Y, H.i" }} · {{ i.pengguna.nama }}</span><br>{{ i.baru }} baru, {{ i.diperbarui }} diperbarui{% if i.gagal %}, <span style="color:var(--merah)">{{ i.gagal }} gagal</span>{% endif %}</p>
+{% empty %}<p class="redup kecil">Belum pernah ada impor.</p>{% endfor %}</section>
+</div>
+{% endblock %}

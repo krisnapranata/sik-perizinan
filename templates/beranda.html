@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load angka %}
+{% block lebar %}lebar{% endblock %}
+{% block panggung %}
+<section class="panggung"><div class="pahlawan">
+  <span class="chip">{% include "ikon/circle-check.svg" %}PANDU LOTIM · DPMPTSP Lombok Timur</span>
+  <h1>Data perizinan dan layanan izin Lombok Timur dalam satu portal</h1>
+  <p>Lihat statistik perizinan berusaha dan nonberusaha, ajukan izin nonberusaha secara online, dan pantau statusnya dari mana saja.</p>
+  <form class="cek-besar" method="get" action="{% url 'perizinan:cek_status' %}" role="search">
+    <label class="sr" for="id_nomor">Nomor registrasi</label>
+    <input id="id_nomor" name="nomor" maxlength="24" required placeholder="Masukkan nomor registrasi" autocomplete="off" spellcheck="false">
+    <button class="aksen">Cek status</button>
+  </form>
+</div></section>
+<div class="kisi kisi-kpi" style="max-width:1120px;margin:0 auto;padding:0 24px">
+  <div class="kartu kpi sorot"><div class="kpi-atas">Pelaku usaha<span class="kpi-ikon">{% include "ikon/store.svg" %}</span></div><div class="kpi-angka">{{ ringkasan.usaha|ribuan }}</div><div class="kpi-bawah">NIB terdaftar di OSS-RBA</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Proyek<span class="kpi-ikon">{% include "ikon/files.svg" %}</span></div><div class="kpi-angka">{{ ringkasan.proyek|ribuan }}</div><div class="kpi-bawah">proyek berusaha</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Nilai investasi<span class="kpi-ikon">{% include "ikon/chart-column.svg" %}</span></div><div class="kpi-angka">{{ ringkasan.investasi|rupiah_ringkas }}</div><div class="kpi-bawah">total rencana investasi</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Tenaga kerja<span class="kpi-ikon">{% include "ikon/user.svg" %}</span></div><div class="kpi-angka">{{ ringkasan.tki|ribuan }}</div><div class="kpi-bawah"><a href="{% url 'basisdata:statistik' %}">Lihat data lengkap</a></div></div>
+</div>
+<div class="fitur">
+  <div class="kartu"><span class="kpi-ikon">{% include "ikon/upload.svg" %}</span><h3>Ajukan dari HP</h3><p>Daftar akun, catat NIB dari OSS, lalu unggah KTP, NPWP, dan syarat lain dalam PDF atau JPG.</p></div>
+  <div class="kartu"><span class="kpi-ikon">{% include "ikon/clock.svg" %}</span><h3>Status selalu terlihat</h3><p>Lihat berkas sedang di meja siapa, dan dapat email saat berkas diterima, dikembalikan, atau izin terbit.</p></div>
+  <div class="kartu"><span class="kpi-ikon">{% include "ikon/store.svg" %}</span><h3>Dibantu di loket</h3><p>Lebih suka datang langsung? Petugas loket mendaftarkan permohonan atas nama Anda.</p></div>
+</div>
+{% endblock %}
+{% block isi %}<div style="text-align:center"><p class="redup">Belum punya akun?</p><div class="deret" style="justify-content:center"><a class="tombol aksen" href="{% url 'akun:daftar' %}">Daftar sebagai pemohon</a><a class="tombol garis" href="{% url 'akun:masuk' %}">Masuk</a></div></div>{% endblock %}

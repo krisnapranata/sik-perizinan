@@ -1,0 +1,4 @@
+{% if halaman.has_other_pages %}<nav class="paginasi" aria-label="Halaman">
+{% if halaman.has_previous %}<a class="tombol garis kecil" href="?{% if kueri %}{{ kueri }}&amp;{% endif %}halaman={{ halaman.previous_page_number }}">Sebelumnya</a>{% endif %}
+<span class="redup">Halaman {{ halaman.number }} dari {{ halaman.paginator.num_pages }}</span>
+{% if halaman.has_next %}<a class="tombol garis kecil" href="?{% if kueri %}{{ kueri }}&amp;{% endif %}halaman={{ halaman.next_page_number }}">Berikutnya</a>{% endif %}</nav>{% endif %}

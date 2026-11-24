@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block judul %}Antrean{% endblock %}
+{% block isi %}<div class="kepala"><div><h1>Antrean saya</h1><p>{{ halaman.paginator.count }} permohonan menunggu {% if user.petugas %}verifikasi atau penerbitan{% else %}penilaian {{ user.instansi }}{% endif %}. Yang paling lama menunggu ada di atas.</p></div></div>
+<section class="kartu tanpa-isi">{% include "perizinan/_tabel.html" with kosong="Antrean kosong. Tidak ada permohonan yang menunggu Anda." %}</section>{% endblock %}

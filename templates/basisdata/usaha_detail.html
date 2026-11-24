@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% load angka %}{% block judul %}{{ u.nama }}{% endblock %}
+{% block isi %}
+<div class="kepala">
+  <div><h1>{{ u.nama }}</h1><div class="deret" style="margin-top:10px"><span class="chip kode">NIB {{ u.nib }}</span>{% if u.jenis_perusahaan %}<span class="chip">{{ u.jenis_perusahaan }}</span>{% endif %}{% if u.status_pm %}<span class="chip">{{ u.status_pm }}</span>{% endif %}</div></div>
+  <a class="tombol garis" href="{% url 'basisdata:oss_daftar' %}?q={{ u.nib }}">Kembali ke daftar</a>
+</div>
+<div class="kisi kisi-kpi">
+  <div class="kartu kpi sorot"><div class="kpi-atas">Proyek<span class="kpi-ikon">{% include "ikon/files.svg" %}</span></div><div class="kpi-angka">{{ rekap.proyek|ribuan }}</div><div class="kpi-bawah">terdaftar di OSS</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Nilai investasi<span class="kpi-ikon">{% include "ikon/chart-column.svg" %}</span></div><div class="kpi-angka" title="{{ rekap.investasi|rupiah }}">{{ rekap.investasi|rupiah_ringkas }}</div><div class="kpi-bawah">semua proyek</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Tenaga kerja<span class="kpi-ikon">{% include "ikon/user.svg" %}</span></div><div class="kpi-angka">{{ rekap.tki|ribuan }}</div><div class="kpi-bawah">TKI</div></div>
+</div>
+<section class="kartu tanpa-isi jeda"><div class="gulir"><table class="tabel tumpuk-hp">
+<thead><tr><th>Proyek</th><th>KBLI</th><th>Kecamatan</th><th>Status izin</th><th class="angka">Investasi</th></tr></thead><tbody>
+{% for p in proyek %}<tr><td class="sel-utama"><a href="{% url 'basisdata:oss_detail' p.id_proyek %}">{{ p.nama_proyek|default:p.id_proyek }}</a><small class="kode">{{ p.id_proyek }}</small></td>
+<td class="sel-lain">{% if p.kbli %}{{ p.kbli.kode }} — {{ p.kbli.judul }}{% else %}-{% endif %}</td><td class="sel-lain">{{ p.kecamatan.nama }}</td>
+<td class="sel-status"><span class="lencana {{ p.status_izin }}">{{ p.get_status_izin_display }}</span></td><td class="sel-lain angka">{{ p.investasi|rupiah }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

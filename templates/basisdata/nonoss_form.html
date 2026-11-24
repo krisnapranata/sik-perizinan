@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block judul %}{% if izin %}Ubah izin{% else %}Tambah izin NonOSS{% endif %}{% endblock %}
+{% block isi %}
+<div class="kepala"><div><h1>{% if izin %}Ubah data izin{% else %}Tambah izin NonOSS{% endif %}</h1><p>Setiap perubahan tercatat di riwayat. NIK dan dokumen hanya terlihat oleh petugas.</p></div>
+<a class="tombol garis" href="{% if izin %}{% url 'basisdata:nonoss_detail' izin.pk %}{% else %}{% url 'basisdata:nonoss_daftar' %}{% endif %}">Batal</a></div>
+<section class="kartu sempit" style="padding:28px">
+<form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_div }}<button class="aksen" style="width:100%">Simpan</button></form>
+</section>
+{% endblock %}

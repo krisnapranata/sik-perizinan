@@ -1,0 +1,18 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+media/
+staticfiles/
+backups/
+*.sqlite3
+.ruff_cache/
+.vscode/
+.claude/
+nginx/certs/*.pem
+nginx/certs/*.key
+# Data uji berisi data usaha asli dari OSS
+Data_Uji_aplikasi.xlsx

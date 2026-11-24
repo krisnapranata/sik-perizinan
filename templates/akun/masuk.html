@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block judul %}Masuk{% endblock %}
+{% block isi %}<div class="kartu" style="padding:28px"><h1 style="font-size:1.4rem">Masuk ke akun Anda</h1><p class="redup" style="margin:6px 0 22px">Gunakan email yang terdaftar.</p>
+<form method="post">{% csrf_token %}{{ form.as_div }}<input type="hidden" name="next" value="{{ next }}"><button class="aksen" style="width:100%">Masuk</button></form>
+<p class="kecil" style="margin:16px 0 0;text-align:center"><a href="{% url 'akun:reset' %}">Lupa password?</a></p></div>
+<p class="redup kecil" style="text-align:center;margin-top:16px">Belum punya akun? <a href="{% url 'akun:daftar' %}">Daftar sebagai pemohon</a></p>{% endblock %}

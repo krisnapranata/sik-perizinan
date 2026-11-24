@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block judul %}{{ judul }}{% endblock %}
+{% block isi %}<div class="kartu {% if user.is_authenticated %}sempit{% endif %}" style="padding:28px"><h1 style="font-size:1.4rem;margin-bottom:20px">{{ judul }}</h1>
+{% if form %}<form method="post">{% csrf_token %}{{ form.as_div }}<button class="aksen" style="width:100%">{{ tombol }}</button></form>
+{% else %}<p>Tautan ini sudah tidak berlaku. <a href="{% url 'akun:reset' %}">Minta tautan baru</a>.</p>{% endif %}</div>{% endblock %}

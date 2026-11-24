@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block judul %}Ajukan izin{% endblock %}
+{% block isi %}<div class="kepala"><div><h1>Ajukan izin</h1><p>Atas nama {{ pemohon.nama }}. Setelah memilih jenis izin, Anda mengisi formulir lokasi, mengunggah syarat, lalu mengirimkannya.</p></div></div>
+<div class="kartu sempit"><form method="post">{% csrf_token %}{{ form.as_div }}<p class="redup kecil" style="margin-top:-6px">Belum yakin? <a href="{% url 'perizinan:katalog' %}">Baca persyaratan dan alur setiap jenis izin</a>.</p><button class="aksen">Lanjut</button></form></div>{% endblock %}

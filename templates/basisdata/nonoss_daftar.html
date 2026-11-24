@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% load angka %}{% block judul %}Perizinan Nonberusaha (NonOSS){% endblock %}
+{% block isi %}
+<div class="kepala">
+  <div><h1>Perizinan Nonberusaha (NonOSS)</h1><p>{{ rekap.total|ribuan }} izin{% if aktif %} sesuai filter{% endif %}</p></div>
+  <div class="deret">
+    <a class="tombol garis" href="{% url 'basisdata:nonoss_ekspor' 'xlsx' %}?{{ kueri }}">{% include "ikon/download.svg" %}Excel</a>
+    <a class="tombol garis" href="{% url 'basisdata:nonoss_ekspor' 'pdf' %}?{{ kueri }}">{% include "ikon/download.svg" %}PDF</a>
+    {% if bisa_kelola %}<a class="tombol aksen" href="{% url 'basisdata:nonoss_tambah' %}">{% include "ikon/plus.svg" %}Tambah izin</a>{% endif %}
+  </div>
+</div>
+
+<div class="kisi kisi-kpi">
+  {% for label, n in rekap.per_status %}<div class="kartu kpi{% if forloop.first %} sorot{% endif %}"><div class="kpi-atas">{{ label }}</div><div class="kpi-angka">{{ n|ribuan }}</div></div>{% endfor %}
+</div>
+
+<section class="kartu tanpa-isi jeda">
+<form class="saring" method="get" role="search" aria-label="Filter data">
+  <div class="cari-luas"><label for="q">Nomor izin atau nama pemohon</label><input id="q" name="q" value="{{ aktif.q }}" autocomplete="off" spellcheck="false"></div>
+  <div><label for="f-tahun">Tahun</label><select id="f-tahun" name="tahun"><option value="">Semua</option>{% for t in pilihan.tahun %}<option value="{{ t }}" {% if aktif.tahun == t|stringformat:"s" %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+  <div><label for="f-jenis">Jenis izin</label><select id="f-jenis" name="jenis"><option value="">Semua</option>{% for j in pilihan.jenis %}<option value="{{ j.pk }}" {% if aktif.jenis == j.pk|stringformat:"s" %}selected{% endif %}>{{ j.nama }}</option>{% endfor %}</select></div>
+  <div><label for="f-kec">Kecamatan</label><select id="f-kec" name="kecamatan"><option value="">Semua</option>{% for k in pilihan.kecamatan %}<option value="{{ k.pk }}" {% if aktif.kecamatan == k.pk|stringformat:"s" %}selected{% endif %}>{{ k.nama }}</option>{% endfor %}</select></div>
+  <div><label for="f-status">Status</label><select id="f-status" name="status"><option value="">Semua</option>{% for k, l in pilihan.status %}<option value="{{ k }}" {% if aktif.status == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="tombol-saring"><button class="aksen">{% include "ikon/search.svg" %}Terapkan</button>{% if aktif %}<a class="tombol garis" href="{% url 'basisdata:nonoss_daftar' %}">Reset</a>{% endif %}</div>
+</form>
+<div class="gulir"><table class="tabel tumpuk-hp">
+<thead><tr><th>Izin</th><th>Pemohon</th><th>Kecamatan</th><th>Status</th><th>Tanggal terbit</th></tr></thead>
+<tbody>{% for i in halaman %}<tr>
+<td class="sel-utama"><a href="{% url 'basisdata:nonoss_detail' i.pk %}">{{ i.jenis.nama }}</a><small class="kode">{{ i.nomor_izin|default:"Belum bernomor" }}</small></td>
+<td class="sel-lain">{{ i.nama_pemohon }}</td>
+<td class="sel-lain">{{ i.kecamatan.nama }}</td>
+<td class="sel-status"><span class="lencana {{ i.status }}">{{ i.get_status_display }}</span></td>
+<td class="sel-lain redup">{{ i.tanggal_terbit|date:"j M Y"|default:"-" }}</td></tr>
+{% empty %}<tr><td colspan="5" class="kosong">{% if aktif %}Tidak ada data yang cocok dengan filter.{% else %}Belum ada data izin NonOSS.{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% include "basisdata/_paginasi.html" %}
+</section>
+{% endblock %}

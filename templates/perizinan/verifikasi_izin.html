@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block judul %}Verifikasi dokumen izin{% endblock %}{% block lebar %}lebar{% endblock %}
+{% block isi %}{% if izin %}<div class="kartu" style="padding:28px">
+<div class="kartu-kepala"><div><h1 style="font-size:1.35rem">Dokumen izin terdaftar</h1><p>Dokumen ini diterbitkan DPMPTSP Kabupaten Lombok Timur melalui PANDU LOTIM.</p></div><span class="cap terbit">{% include "ikon/circle-check.svg" %}Asli</span></div>
+<dl class="data"><dt>Jenis izin</dt><dd>{{ izin.permohonan.jenis_izin.nama }}</dd><dt>Nomor izin</dt><dd class="kode">{{ izin.nomor_izin }}</dd><dt>Tanggal terbit</dt><dd>{{ izin.tanggal_terbit|date:"j F Y" }}</dd><dt>Pemegang izin</dt><dd>{{ nama_samar }}</dd><dt>Kecamatan</dt><dd>{{ izin.permohonan.kecamatan.nama|default:"-" }}</dd></dl>
+<p class="redup kecil" style="margin-top:16px">Pastikan nomor dan tanggal di atas sama dengan yang tercetak di dokumen. Nama pemegang izin disamarkan untuk melindungi data pribadi.</p></div>
+{% else %}<div class="peringatan"><b>Dokumen tidak ditemukan</b>Kode verifikasi tidak terdaftar. Dokumen mungkin tidak asli; hubungi DPMPTSP Kabupaten Lombok Timur.</div>{% endif %}{% endblock %}

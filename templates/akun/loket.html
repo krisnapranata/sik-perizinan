@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block judul %}Layanan loket{% endblock %}
+{% block isi %}<div class="kepala"><div><h1>Layanan loket</h1><p>Cari pemohon yang sudah terdaftar, atau daftarkan pemohon baru.</p></div><a class="tombol aksen" href="{% url 'akun:loket_daftar' %}">{% include "ikon/plus.svg" %}Daftarkan pemohon</a></div>
+<div class="kartu sempit"><form method="get">{{ form.as_div }}<p class="redup kecil" style="margin-top:-8px">Ketik email, NIK, atau NIB secara lengkap.</p><button class="garis">{% include "ikon/search.svg" %}Cari pemohon</button></form></div>
+{% if hasil is not None %}<section class="kartu tanpa-isi jeda sempit"><table class="tabel"><thead><tr><th>Nama</th><th>Tipe</th></tr></thead><tbody>{% for p in hasil %}<tr><td class="sel-utama"><a href="{% url 'akun:loket_pemohon' p.pk %}">{{ p.nama }}</a></td><td>{{ p.get_tipe_display }}</td></tr>{% empty %}<tr><td colspan="2" class="kosong">Tidak ada pemohon dengan data itu. Periksa penulisannya, atau daftarkan sebagai pemohon baru.</td></tr>{% endfor %}</tbody></table></section>{% endif %}
+{% endblock %}

@@ -1,0 +1,2 @@
+{% load angka %}<section class="kartu"><div class="kartu-kepala"><h2>{{ judul }}</h2></div>
+<div class="batang">{% for b in baris %}<div class="batang-baris"><span>{{ b.nama }}</span><b>{{ b.proyek|ribuan }}</b><span class="rel" aria-hidden="true"><i style="width:{% persen b.proyek total %}%"></i></span></div>{% empty %}<p class="redup">Belum ada data.</p>{% endfor %}</div></section>

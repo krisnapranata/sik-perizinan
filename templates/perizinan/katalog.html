@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block judul %}Layanan izin nonberusaha{% endblock %}{% block lebar %}penuh{% endblock %}
+{% block isi %}<div class="kepala"><div><h1>Layanan izin nonberusaha</h1><p>Baca persyaratan dan alurnya sebelum mengajukan. Perizinan berusaha tetap diajukan melalui OSS-RBA.</p></div></div>
+<div class="kisi" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+{% for j in daftar_jenis %}<a class="kartu kartu-p" href="{% url 'perizinan:katalog_detail' j.pk %}">
+  <div class="atas-p"><div><h3>{{ j.nama }}</h3>{% if j.keterangan %}<p class="redup kecil" style="margin:6px 0 0">{{ j.keterangan|truncatewords:28 }}</p>{% endif %}</div></div>
+  <span class="kecil">{{ j.syarat.all|length }} syarat · batas layanan {{ j.sla_hari }} hari{% if j.perlu_kajian_teknis %} · dengan penilaian teknis{% endif %}</span>
+</a>{% empty %}<div class="kartu kosong"><p>Belum ada jenis izin yang dibuka.</p></div>{% endfor %}
+</div>{% endblock %}

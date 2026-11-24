@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% load angka %}{% block judul %}Data dan Analisis{% endblock %}
+{% block lebar %}penuh{% endblock %}
+{% block isi %}
+<div class="kepala">
+  <div><h1>Data dan analisis perizinan</h1><p>Angka agregat dari database perizinan berusaha (OSS-RBA) dan nonberusaha{% if d.tahun %}, tahun {{ d.tahun }}{% endif %}.</p></div>
+  <div class="deret">
+    <form class="deret" method="get"><label class="sr" for="tahun">Tahun</label><select id="tahun" name="tahun" style="width:auto;min-height:40px"><option value="">Semua tahun</option>{% for t in d.pilihan_tahun %}<option value="{{ t }}" {% if d.tahun == t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select><button class="garis">Tampilkan</button></form>
+    <a class="tombol garis" href="{% url 'basisdata:statistik_ekspor' 'xlsx' %}{% if d.tahun %}?tahun={{ d.tahun }}{% endif %}">{% include "ikon/download.svg" %}Excel</a>
+    <a class="tombol aksen" href="{% url 'basisdata:statistik_ekspor' 'pdf' %}{% if d.tahun %}?tahun={{ d.tahun }}{% endif %}">{% include "ikon/download.svg" %}PDF</a>
+  </div>
+</div>
+
+{% with r=d.ringkasan %}<div class="kisi kisi-kpi">
+  <div class="kartu kpi sorot"><div class="kpi-atas">Jumlah usaha<span class="kpi-ikon">{% include "ikon/store.svg" %}</span></div><div class="kpi-angka">{{ r.usaha|ribuan }}</div><div class="kpi-bawah">NIB unik</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Jumlah proyek<span class="kpi-ikon">{% include "ikon/files.svg" %}</span></div><div class="kpi-angka">{{ r.proyek|ribuan }}</div><div class="kpi-bawah">proyek OSS-RBA</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Nilai investasi<span class="kpi-ikon">{% include "ikon/chart-column.svg" %}</span></div><div class="kpi-angka" title="{{ r.investasi|rupiah }}">{{ r.investasi|rupiah_ringkas }}</div><div class="kpi-bawah">total rencana investasi</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Tenaga kerja<span class="kpi-ikon">{% include "ikon/user.svg" %}</span></div><div class="kpi-angka">{{ r.tki|ribuan }}</div><div class="kpi-bawah">tenaga kerja Indonesia</div></div>
+</div>{% endwith %}
+
+<section class="kartu jeda"><div class="kartu-kepala"><div><h2>Tren per tahun</h2><p>Jumlah proyek per tahun terbit; arahkan kursor untuk nilai investasi</p></div></div>
+{% if d.tren %}<div class="kolom" style="--n:{{ d.tren|length }}" role="list">
+{% for t in d.tren %}<span class="kolom-batang" tabindex="0" role="listitem" aria-label="{{ t.tahun }}: {{ t.proyek }} proyek, {{ t.investasi|rupiah }}"><i style="height:{% persen t.proyek d.maks_tren %}%"></i><span class="tip">{{ t.tahun }}: {{ t.proyek|ribuan }} proyek · {{ t.usaha|ribuan }} usaha · {{ t.investasi|rupiah_ringkas }}</span></span>{% endfor %}
+</div><div class="kolom-label" style="--n:{{ d.tren|length }}">{% for t in d.tren %}<span class="tampak">{{ t.tahun }}</span>{% endfor %}</div>
+{% else %}<p class="redup">Belum ada data.</p>{% endif %}</section>
+
+<div class="kisi jeda" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+{% include "basisdata/_sebaran.html" with judul="Per sektor" baris=d.per_sektor total=d.ringkasan.proyek %}
+{% include "basisdata/_sebaran.html" with judul="Per skala usaha" baris=d.per_skala total=d.ringkasan.proyek %}
+{% include "basisdata/_sebaran.html" with judul="Per tingkat risiko" baris=d.per_risiko total=d.ringkasan.proyek %}
+<section class="kartu"><div class="kartu-kepala"><div><h2>Layanan izin online</h2><p>{{ d.layanan.total|ribuan }} permohonan · rata-rata {% if d.layanan.lama.rata_hari is not None %}{{ d.layanan.lama.rata_hari }} hari sampai terbit{% else %}lama proses belum ada{% endif %}</p></div></div>
+<div class="batang">{% for n, j in d.layanan.per_status %}<div class="batang-baris"><span>{{ n }}</span><b>{{ j|ribuan }}</b><span class="rel" aria-hidden="true"><i style="width:{% persen j d.layanan.total %}%"></i></span></div>{% endfor %}</div></section>
+<section class="kartu"><div class="kartu-kepala"><div><h2>Perizinan nonberusaha</h2><p>{{ d.nonoss.total|ribuan }} izin tercatat</p></div></div>
+<div class="batang">{% for n, j in d.nonoss.per_jenis %}<div class="batang-baris"><span>{{ n }}</span><b>{{ j|ribuan }}</b><span class="rel" aria-hidden="true"><i style="width:{% persen j d.nonoss.total %}%"></i></span></div>{% empty %}<p class="redup">Belum ada data.</p>{% endfor %}</div></section>
+</div>
+
+<section class="kartu tanpa-isi jeda"><div class="kartu-kepala" style="padding:20px 20px 0"><div><h2>Sebaran per kecamatan</h2></div></div>
+<div class="gulir"><table class="tabel"><thead><tr><th>Kecamatan</th><th class="angka">Usaha</th><th class="angka">Proyek</th><th class="angka">Investasi</th></tr></thead><tbody>
+{% for b in d.per_kecamatan %}<tr><td>{{ b.nama }}</td><td class="angka">{{ b.usaha|ribuan }}</td><td class="angka">{{ b.proyek|ribuan }}</td><td class="angka">{{ b.investasi|rupiah }}</td></tr>
+{% empty %}<tr><td colspan="4" class="kosong">Belum ada data.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

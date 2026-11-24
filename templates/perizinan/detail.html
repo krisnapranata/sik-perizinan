@@ -1,0 +1,90 @@
+{% extends "base.html" %}{% load berkas %}{% block judul %}{{ p.nomor_registrasi }}{% endblock %}
+{% block isi %}
+<div class="kepala">
+  <div><h1>{{ p.jenis_izin.nama }}</h1>
+  <div class="deret" style="margin-top:10px"><span class="lencana {{ p.status }}">{{ p.get_status_display }}</span><span class="chip kode">{{ p.nomor_registrasi }}</span><span class="chip">{% if p.kanal == 'berbantuan' %}Dibantu petugas{% else %}Mandiri{% endif %}</span>{% if p.batas_layanan and p.status != 'terbit' and p.status != 'ditolak' and p.status != 'perlu_perbaikan' %}<span class="chip">Batas layanan {{ p.batas_layanan|date:"j M Y" }}</span>{% endif %}</div></div>
+  {% if izin_terbit %}{% url 'perizinan:unduh_izin' p.nomor_registrasi as url_izin %}<div class="deret"><a class="tombol garis" href="{{ url_izin }}">{% include "ikon/download.svg" %}Unduh izin</a><a class="tombol aksen" href="{{ url_izin }}?lihat=1" data-pratinjau="{{ izin_terbit.berkas_unduhan|jenis_pratinjau }}" data-judul="Dokumen izin {{ izin_terbit.nomor_izin }}" data-unduh="{{ url_izin }}">{% include "ikon/eye.svg" %}Lihat dokumen izin</a></div>{% endif %}
+</div>
+
+{% if p.status == 'perlu_perbaikan' and p.catatan_terakhir %}<div class="peringatan" role="note"><b>Perlu diperbaiki sebelum dikirim ulang</b>{{ p.catatan_terakhir }}</div>
+{% elif p.status == 'ditolak' and p.catatan_terakhir %}<div class="peringatan" role="note"><b>Permohonan ditolak</b>{{ p.catatan_terakhir }}</div>
+{% elif p.catatan_terakhir %}<div class="pesan">{{ p.catatan_terakhir }}</div>{% endif %}
+
+{% if tahapan %}<section class="kartu" style="margin-bottom:16px">
+  <div class="kartu-kepala"><div><h2>Alur permohonan</h2></div></div>
+  <ol class="langkah">
+  {% for b in tahapan %}<li class="{{ b.kondisi }}"{% if b.kondisi == 'aktif' %} aria-current="step"{% endif %}>
+    <span class="bulat">{% if b.kondisi == 'sah' %}{% include "ikon/check.svg" %}{% elif b.kondisi == 'coret' %}{% include "ikon/x.svg" %}{% elif b.kondisi == 'aktif' %}{% include "ikon/clock.svg" %}{% else %}{{ forloop.counter }}{% endif %}</span>
+    <b>{{ b.tahap }}</b><small>{% if b.hasil %}{{ b.hasil }}{% else %}Belum{% endif %}{% if b.petugas %}<br>{{ b.petugas }}{% endif %}{% if b.waktu %}<br>{{ b.waktu|date:"j M, H.i" }}{% endif %}</small></li>{% endfor %}
+  </ol>
+</section>{% endif %}
+
+<div class="kisi kisi-detail">
+<div>
+  <section class="kartu"><div class="kartu-kepala"><div><h2>Formulir permohonan</h2><p>Lokasi objek dan rencana kegiatan</p></div></div>
+  {% if form_formulir %}<form method="post" action="{% url 'perizinan:formulir' p.nomor_registrasi %}">{% csrf_token %}{{ form_formulir.as_div }}<button class="garis">Simpan formulir</button></form>
+  {% else %}<dl class="data">
+    <dt>Alamat lokasi</dt><dd>{{ p.lokasi_alamat|default:"-" }}</dd>
+    <dt>Kelurahan/desa</dt><dd>{{ p.kelurahan_nama|default:"-" }}</dd>
+    <dt>Kecamatan</dt><dd>{{ p.kecamatan.nama|default:"-" }}</dd>
+    <dt>Luas tanah</dt><dd>{% if p.luas_tanah is not None %}{{ p.luas_tanah|floatformat:"-2" }} m²{% else %}-{% endif %}</dd>
+    <dt>Titik koordinat</dt><dd class="kode">{{ p.koordinat|default:"-" }}</dd>
+    <dt>Rencana kegiatan</dt><dd>{{ p.rencana_kegiatan|default:"-" }}</dd>
+  </dl>{% endif %}</section>
+
+  <section class="kartu tanpa-isi">
+    <div class="kartu-kepala" style="padding-bottom:16px;margin:0"><div><h2>Syarat</h2><p>{% if bisa_perbaiki %}PDF atau JPG, maksimal 5 MB per berkas{% elif bisa_cek %}Periksa setiap dokumen; beri catatan bila tidak sesuai{% else %}{{ baris_syarat|length }} dokumen{% endif %}</p></div></div>
+    {% for s, d in baris_syarat %}<div class="syarat">
+      <div class="syarat-atas"><div class="syarat-nama"><span class="berkas-ikon">{% include "ikon/file-text.svg" %}</span><div><h3>{{ s.nama }}{% if not s.wajib %} <span class="redup kecil">(tidak wajib)</span>{% endif %}</h3>
+        {% if s.keterangan %}<small class="redup">{{ s.keterangan }}</small><br>{% endif %}
+        {% if d %}<small>{% url 'perizinan:unduh_dokumen' p.nomor_registrasi d.pk as url_dok %}{% include "_berkas.html" with url=url_dok berkas=d.berkas judul=s.nama %}{% if d.catatan_cek %}<span class="catatan-cek">{{ d.catatan_cek }}</span>{% endif %}</small>{% else %}<small>Belum diunggah</small>{% endif %}</div></div>
+        {% if d %}<span class="lencana {{ d.status_cek }}">{{ d.get_status_cek_display }}</span>{% endif %}</div>
+      {% if bisa_perbaiki %}<form method="post" enctype="multipart/form-data" action="{% url 'perizinan:unggah' p.nomor_registrasi s.pk %}">{% csrf_token %}<input type="file" name="berkas" accept=".pdf,.jpg,.jpeg" required aria-label="Pilih berkas {{ s.nama }}"><button class="garis kecil">{% include "ikon/upload.svg" %}{% if d %}Ganti{% else %}Unggah{% endif %}</button></form>{% endif %}
+      {% if bisa_cek and d %}<form method="post" action="{% url 'perizinan:cek' p.nomor_registrasi d.pk %}">{% csrf_token %}
+        <input name="catatan" placeholder="Catatan untuk pemohon (wajib bila tidak sesuai)" value="{{ d.catatan_cek }}" aria-label="Catatan {{ s.nama }}">
+        <button class="garis kecil" name="status_cek" value="sesuai">{% include "ikon/check.svg" %}Sesuai</button><button class="bahaya kecil" name="status_cek" value="tidak_sesuai">{% include "ikon/x.svg" %}Tidak sesuai</button></form>{% endif %}
+    </div>{% endfor %}
+  </section>
+
+  {% if bisa_perbaiki %}<section class="kartu"><div class="kartu-kepala"><div><h2>Kirim permohonan</h2><p>Setelah dikirim, permohonan tidak bisa diubah kecuali petugas meminta perbaikan.</p></div></div>
+  {% if kekurangan %}<div class="peringatan"><b>Belum bisa dikirim</b>{% for k in kekurangan %}{{ k }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+  <form method="post" action="{% url 'perizinan:kirim' p.nomor_registrasi %}">{% csrf_token %}<button class="aksen" {% if kekurangan %}disabled aria-disabled="true"{% endif %}>Kirim permohonan</button></form></section>{% endif %}
+
+  {% if aksi %}<section class="kartu"><div class="kartu-kepala"><div><h2>Verifikasi administrasi</h2><p>Tandai semua dokumen Sesuai sebelum {% if p.jenis_izin.perlu_kajian_teknis %}meneruskan ke instansi teknis{% else %}menyetujui{% endif %}. Pemohon membaca catatan Anda.</p></div></div>
+  <form method="post" action="{% url 'perizinan:aksi' p.nomor_registrasi %}">{% csrf_token %}
+  {% if Aksi.TERUSKAN in aksi %}{{ form_teruskan.as_div }}{% endif %}
+  <div><label for="catatan">Catatan</label><textarea id="catatan" name="catatan" rows="2" aria-describedby="catatan-bantu"></textarea><span class="helptext" id="catatan-bantu">Wajib diisi bila meminta perbaikan atau menolak.</span></div>
+  <div class="deret">{% for a in aksi %}<button name="aksi" value="{{ a.value }}" class="{% if a.value == 'tolak' %}bahaya{% elif a.value == 'minta_perbaikan' %}garis{% else %}aksen{% endif %}">{{ a.label }}</button>{% endfor %}</div></form>
+  </section>{% endif %}
+
+  {% if bisa_nilai %}<section class="kartu"><div class="kartu-kepala"><div><h2>Penilaian teknis {{ user.instansi }}</h2><p>Memenuhi: permohonan disetujui. Tidak memenuhi: permohonan ditolak dengan alasan Anda.</p></div></div>
+  <form method="post" enctype="multipart/form-data" action="{% url 'perizinan:nilai' p.nomor_registrasi %}">{% csrf_token %}{{ form_nilai.as_div }}<button class="aksen">Simpan penilaian</button></form></section>{% endif %}
+
+  {% if bisa_terbit %}<section class="kartu"><div class="kartu-kepala"><div><h2>Terbitkan izin</h2><p>Nomor izin dibuat otomatis. Sistem membuat dokumen izin dengan kode QR untuk cek keaslian.</p></div></div>
+  <form method="post" enctype="multipart/form-data" action="{% url 'perizinan:terbit' p.nomor_registrasi %}">{% csrf_token %}{{ form_terbit.as_div }}<button class="aksen">Terbitkan izin</button></form></section>{% endif %}
+</div>
+
+<aside class="tumpuk">
+  {% if izin_terbit %}<section class="kartu"><div class="kartu-kepala"><h2>Izin terbit</h2><span class="cap terbit">{% include "ikon/circle-check.svg" %}Terbit</span></div>
+  <dl class="data"><dt>Nomor izin</dt><dd class="kode">{{ izin_terbit.nomor_izin }}</dd><dt>Tanggal</dt><dd>{{ izin_terbit.tanggal_terbit|date:"j F Y" }}</dd><dt>Dokumen</dt><dd>{% if izin_terbit.berkas_ttd %}Bertanda tangan{% else %}Dibuat sistem (ber-QR){% endif %}</dd><dt>Cek keaslian</dt><dd><a href="{% url 'perizinan:verifikasi_izin' izin_terbit.kode_verifikasi %}">Halaman verifikasi</a></dd></dl>
+  {% if bisa_ganti_izin %}<form method="post" enctype="multipart/form-data" action="{% url 'perizinan:ganti_dokumen_izin' p.nomor_registrasi %}" style="margin-top:16px">{% csrf_token %}{{ form_ganti_izin.as_div }}<button class="garis kecil">{% include "ikon/upload.svg" %}Unggah</button></form>{% endif %}
+  </section>{% endif %}
+
+  {% if penilaian %}<section class="kartu"><div class="kartu-kepala"><h2>Penilaian teknis</h2></div>
+  {% for n in penilaian %}<div style="margin-bottom:12px"><span class="lencana {% if n.hasil == 'memenuhi' %}sesuai{% else %}tidak_sesuai{% endif %}">{{ n.get_hasil_display }}</span> <b>{{ n.instansi }}</b><br><span class="redup kecil">{{ n.penilai.nama }} · {{ n.waktu|date:"j M Y, H.i" }}</span><div class="catatan">{{ n.rekomendasi }}</div>{% if n.berkas %}{% url 'perizinan:unduh_rekomendasi' p.nomor_registrasi n.pk as url_rek %}<small>{% include "_berkas.html" with url=url_rek berkas=n.berkas judul="Berkas rekomendasi" %}</small>{% endif %}</div>{% endfor %}
+  </section>{% endif %}
+
+  <section class="kartu"><div class="kartu-kepala"><h2>Pemohon</h2></div><dl class="data">
+  <dt>Nama</dt><dd>{{ p.pemohon.nama }}</dd><dt>Tipe</dt><dd>{{ p.pemohon.get_tipe_display }}</dd>
+  {% if p.pemohon.nik %}<dt>NIK</dt><dd class="kode">{{ p.pemohon.nik }}</dd>{% endif %}
+  {% if p.pemohon.npwp %}<dt>NPWP</dt><dd class="kode">{{ p.pemohon.npwp }}</dd>{% endif %}
+  {% if p.pemohon.nib %}<dt>NIB</dt><dd><span class="kode">{{ p.pemohon.nib }}</span>{% if p.pemohon.bukti_nib %}<br><span class="kecil">Bukti NIB: {% url 'perizinan:unduh_nib' p.pemohon_id as url_nib %}{% include "_berkas.html" with url=url_nib berkas=p.pemohon.bukti_nib judul="Bukti NIB" %}</span>{% endif %}</dd>{% endif %}
+  {% if p.instansi_penilai %}<dt>Instansi teknis</dt><dd>{{ p.instansi_penilai.nama }}</dd>{% endif %}
+  </dl></section>
+
+  <section class="kartu"><div class="kartu-kepala"><h2>Aktivitas</h2></div>
+  {% if riwayat %}<ol class="aktivitas">{% for r in riwayat reversed %}<li><span class="avatar kecil" aria-hidden="true">{{ r.verifikator.nama|slice:":1"|upper }}</span><div><b>{{ r.verifikator.nama }}</b> <span class="redup">{{ r.get_aksi_display|lower }}</span><br><span class="redup kecil">{{ r.waktu|date:"j M Y, H.i" }}</span>{% if r.catatan %}<div class="catatan">{{ r.catatan }}</div>{% endif %}</div></li>{% endfor %}</ol>
+  {% else %}<p class="redup" style="margin:0">Belum ada aktivitas. Kirim permohonan untuk memulai pemeriksaan.</p>{% endif %}</section>
+</aside>
+</div>
+{% endblock %}

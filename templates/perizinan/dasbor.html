@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% block judul %}Dashboard{% endblock %}
+{% block isi %}
+<div class="kepala">
+  <div><h1>Selamat datang, {{ user.nama }}</h1><p>{% if user.petugas %}Ringkasan permohonan yang perlu Anda verifikasi atau terbitkan.{% elif user.pemeriksa %}Permohonan yang diteruskan ke {{ user.instansi }} untuk penilaian teknis.{% else %}Pantau semua permohonan izin Anda di sini.{% endif %}</p></div>
+  <div class="deret">
+    {% if user.petugas %}<a class="tombol garis" href="{% url 'akun:loket' %}">{% include "ikon/store.svg" %}Layanan berbantuan</a>{% endif %}
+    {% if user.pemeriksa %}<a class="tombol aksen" href="{% url 'perizinan:antrean' %}">{% include "ikon/inbox.svg" %}Buka antrean</a>
+    {% else %}<a class="tombol aksen" href="{% url 'perizinan:baru' %}">{% include "ikon/plus.svg" %}Ajukan izin</a>{% endif %}
+  </div>
+</div>
+
+<div class="kisi kisi-kpi">
+  {% if user.pemeriksa %}
+  <div class="kartu kpi sorot"><div class="kpi-atas">Menunggu Anda<span class="kpi-ikon">{% include "ikon/inbox.svg" %}</span></div><div class="kpi-angka">{{ d.menunggu_saya }}</div><div class="kpi-bawah">{% if d.lewat_batas %}<span class="tren turun">{{ d.lewat_batas }} lewat batas</span>{% else %}semua masih dalam batas layanan{% endif %}</div></div>
+  {% else %}
+  <div class="kartu kpi sorot"><div class="kpi-atas">Perlu dilengkapi<span class="kpi-ikon">{% include "ikon/undo-2.svg" %}</span></div><div class="kpi-angka">{{ d.perlu_diperbaiki }}</div><div class="kpi-bawah">draf atau dikembalikan</div></div>
+  {% endif %}
+  <div class="kartu kpi"><div class="kpi-atas">Sedang diproses<span class="kpi-ikon">{% include "ikon/clock.svg" %}</span></div><div class="kpi-angka">{{ d.diproses }}</div><div class="kpi-bawah">verifikasi, penilaian teknis, atau penerbitan</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Masuk 7 hari<span class="kpi-ikon">{% include "ikon/file-text.svg" %}</span></div><div class="kpi-angka">{{ d.masuk_minggu_ini }}</div>
+    <div class="kpi-bawah">{% if d.selisih_minggu > 0 %}<span class="tren naik">+{{ d.selisih_minggu }}</span>{% elif d.selisih_minggu < 0 %}<span class="tren turun">{{ d.selisih_minggu }}</span>{% else %}<span class="tren tetap">0</span>{% endif %} dibanding minggu lalu</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">{% if user.pemeriksa %}Terbit bulan ini{% else %}Izin terbit{% endif %}<span class="kpi-ikon">{% include "ikon/circle-check.svg" %}</span></div><div class="kpi-angka">{% if user.pemeriksa %}{{ d.terbit_bulan_ini }}{% else %}{{ d.terbit }}{% endif %}</div><div class="kpi-bawah">{% if user.pemeriksa %}{{ d.dikembalikan_bulan_ini }} perlu perbaikan bulan ini{% else %}dari {{ d.total }} permohonan{% endif %}</div></div>
+</div>
+
+{% if user.pemeriksa %}
+<div class="kisi kisi-2-1 jeda">
+  <section class="kartu">
+    <div class="kartu-kepala"><div><h2>Permohonan masuk</h2><p>Jumlah permohonan diajukan per hari, 14 hari terakhir</p></div></div>
+    <div class="kolom" style="--n:{{ d.harian|length }}" role="img" aria-label="Grafik permohonan masuk per hari, 14 hari terakhir. Rincian ada di tabel di bawahnya.">
+      {% for h in d.harian %}<div class="kolom-batang{% if not h.jumlah %} nol{% endif %}" tabindex="0"><i style="height:{{ h.tinggi }}%"></i><span class="tip">{{ h.tanggal|date:"j M" }}: {{ h.jumlah }} berkas</span></div>{% endfor %}
+    </div>
+    <div class="kolom-label" style="--n:{{ d.harian|length }}" aria-hidden="true">{% for h in d.harian %}<span class="{% if forloop.first or forloop.last or forloop.counter == 7 %}tampak{% endif %}">{{ h.tanggal|date:"j M" }}</span>{% endfor %}</div>
+    <table class="sr"><caption>Permohonan masuk per hari</caption><thead><tr><th>Tanggal</th><th>Jumlah</th></tr></thead><tbody>{% for h in d.harian %}<tr><td>{{ h.tanggal|date:"j F Y" }}</td><td>{{ h.jumlah }}</td></tr>{% endfor %}</tbody></table>
+  </section>
+  <section class="kartu">
+    <div class="kartu-kepala"><div><h2>Sebaran status</h2><p>Semua berkas yang sudah dikirim</p></div></div>
+    <div class="batang">{% for s in d.distribusi %}<div class="batang-baris"><span>{{ s.label }}</span><b>{{ s.jumlah }}</b><span class="rel" aria-hidden="true"><i style="width:{{ s.persen }}%"></i></span></div>{% empty %}<p class="redup">Belum ada berkas.</p>{% endfor %}</div>
+  </section>
+</div>
+
+<section class="kartu tanpa-isi jeda">
+  <div class="kartu-kepala"><div><h2>Aktivitas terbaru</h2><p>Berkas yang terakhir berubah</p></div><a class="tombol garis kecil" href="{% url 'perizinan:daftar' %}">Lihat semua</a></div>
+  {% include "perizinan/_tabel.html" with halaman=d.terbaru kosong="Belum ada berkas." %}
+</section>
+
+{% else %}
+<section class="jeda">
+  <div class="kartu-kepala"><div><h2>Permohonan saya</h2></div>{% if d.milik %}<a class="tombol garis kecil" href="{% url 'perizinan:daftar' %}">Lihat semua</a>{% endif %}</div>
+  {% if d.milik %}<div class="daftar-kartu">
+  {% for m in d.milik %}<a class="kartu-p" href="{% url 'perizinan:detail' m.p.nomor_registrasi %}">
+    <div class="atas-p"><div><h3>{{ m.p.jenis_izin.nama }}</h3><span class="kode redup kecil">{{ m.p.nomor_registrasi }}</span></div><span class="lencana {{ m.p.status }}">{{ m.p.get_status_display }}</span></div>
+        <div class="maju{% if m.p.status == 'ditolak' or m.p.status == 'perlu_perbaikan' %} coret{% endif %}" role="progressbar" aria-valuenow="{{ m.kemajuan }}" aria-valuemin="0" aria-valuemax="100" aria-label="Kemajuan"><i style="width:{% if m.kemajuan %}{{ m.kemajuan }}{% else %}4{% endif %}%"></i></div>
+    <span class="redup kecil">Diperbarui {{ m.p.diperbarui_pada|date:"j M Y, H.i" }}</span>
+  </a>{% endfor %}</div>
+  {% else %}<div class="kartu kosong">{% include "ikon/file-text.svg" %}<p>Belum ada permohonan.</p>{% if user.peran == 'pemohon' %}<a class="tombol aksen" href="{% url 'perizinan:baru' %}">Ajukan izin pertama Anda</a>{% endif %}</div>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

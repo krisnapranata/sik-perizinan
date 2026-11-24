@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block judul %}{% if loket %}Daftarkan pemohon{% else %}Daftar akun{% endif %}{% endblock %}{% block lebar %}lebar{% endblock %}
+{% block isi %}{% if loket %}<div class="kepala"><div><h1>Daftarkan pemohon</h1><p>Pemohon akan menerima email untuk membuat password sendiri.</p></div></div>{% endif %}
+<div class="kartu {% if loket %}sempit{% endif %}" style="padding:28px">{% if not loket %}<h1 style="font-size:1.4rem">Buat akun pemohon</h1><p class="redup" style="margin:6px 0 22px">Kode verifikasi (OTP) akan dikirim ke email Anda.</p>{% endif %}
+<form method="post">{% csrf_token %}{{ form.as_div }}<button class="aksen">{% if loket %}Daftarkan pemohon{% else %}Buat akun{% endif %}</button></form></div>{% endblock %}

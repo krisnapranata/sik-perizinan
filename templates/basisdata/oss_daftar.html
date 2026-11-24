@@ -1,0 +1,46 @@
+{% extends "base.html" %}{% load angka %}{% block judul %}Perizinan Berusaha (OSS-RBA){% endblock %}
+{% block isi %}
+<div class="kepala">
+  <div><h1>Perizinan Berusaha (OSS-RBA)</h1><p>{{ rekap.proyek|ribuan }} proyek{% if aktif %} sesuai filter{% endif %}</p></div>
+  <div class="deret">
+    <a class="tombol garis" href="{% url 'basisdata:oss_ekspor' 'xlsx' %}?{{ kueri }}">{% include "ikon/download.svg" %}Excel</a>
+    <a class="tombol garis" href="{% url 'basisdata:oss_ekspor' 'pdf' %}?{{ kueri }}">{% include "ikon/download.svg" %}PDF</a>
+    {% if bisa_kelola %}<a class="tombol aksen" href="{% url 'basisdata:oss_impor' %}">{% include "ikon/upload.svg" %}Impor OSS</a>{% endif %}
+  </div>
+</div>
+
+<div class="kisi kisi-kpi">
+  <div class="kartu kpi sorot"><div class="kpi-atas">Jumlah usaha<span class="kpi-ikon">{% include "ikon/store.svg" %}</span></div><div class="kpi-angka">{{ rekap.usaha|ribuan }}</div><div class="kpi-bawah">NIB unik</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Jumlah proyek<span class="kpi-ikon">{% include "ikon/files.svg" %}</span></div><div class="kpi-angka">{{ rekap.proyek|ribuan }}</div><div class="kpi-bawah">baris data OSS</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Nilai investasi<span class="kpi-ikon">{% include "ikon/chart-column.svg" %}</span></div><div class="kpi-angka" title="{{ rekap.investasi|rupiah }}">{{ rekap.investasi|rupiah_ringkas }}</div><div class="kpi-bawah">total Jumlah Investasi</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Tenaga kerja<span class="kpi-ikon">{% include "ikon/user.svg" %}</span></div><div class="kpi-angka">{{ rekap.tki|ribuan }}</div><div class="kpi-bawah">TKI</div></div>
+</div>
+
+<section class="kartu tanpa-isi jeda">
+<form class="saring" method="get" role="search" aria-label="Filter data">
+  <div class="cari-luas"><label for="q">NIB, nama usaha, atau nama proyek</label><input id="q" name="q" value="{{ aktif.q }}" autocomplete="off" spellcheck="false"></div>
+  <div><label for="f-tahun">Tahun</label><select id="f-tahun" name="tahun"><option value="">Semua</option>{% for t in pilihan.tahun %}<option value="{{ t }}" {% if aktif.tahun == t|stringformat:"s" %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+  <div><label for="f-sektor">Sektor</label><select id="f-sektor" name="sektor"><option value="">Semua</option>{% for k, l in pilihan.sektor %}<option value="{{ k }}" {% if aktif.sektor == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div><label for="f-kec">Kecamatan</label><select id="f-kec" name="kecamatan"><option value="">Semua</option>{% for k in pilihan.kecamatan %}<option value="{{ k.pk }}" {% if aktif.kecamatan == k.pk|stringformat:"s" %}selected{% endif %}>{{ k.nama }}</option>{% endfor %}</select></div>
+  <div><label for="f-skala">Skala usaha</label><select id="f-skala" name="skala"><option value="">Semua</option>{% for s in pilihan.skala %}<option {% if aktif.skala == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label for="f-risiko">Risiko</label><select id="f-risiko" name="risiko"><option value="">Semua</option>{% for s in pilihan.risiko %}<option {% if aktif.risiko == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label for="f-pm">Status PM</label><select id="f-pm" name="status_pm"><option value="">Semua</option>{% for s in pilihan.status_pm %}<option {% if aktif.status_pm == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label for="f-izin">Status izin</label><select id="f-izin" name="status_izin"><option value="">Semua</option>{% for k, l in pilihan.status_izin %}<option value="{{ k }}" {% if aktif.status_izin == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div><label for="f-kbli">KBLI (awalan)</label><input id="f-kbli" name="kbli" value="{{ aktif.kbli }}" inputmode="numeric" maxlength="5" placeholder="mis. 03"></div>
+  <div class="tombol-saring"><button class="aksen">{% include "ikon/search.svg" %}Terapkan</button>{% if aktif %}<a class="tombol garis" href="{% url 'basisdata:oss_daftar' %}">Reset</a>{% endif %}</div>
+</form>
+<div class="gulir"><table class="tabel tumpuk-hp">
+<thead><tr><th>Usaha / proyek</th><th>KBLI</th><th>Kecamatan</th><th>Skala</th><th class="angka">Tahun</th><th class="angka">Investasi</th><th class="angka">TKI</th></tr></thead>
+<tbody>{% for p in halaman %}<tr>
+<td class="sel-utama"><a href="{% url 'basisdata:oss_detail' p.id_proyek %}">{{ p.pelaku.nama }}</a><small class="kode">NIB {{ p.pelaku_id }} · {{ p.nama_proyek|default:"-" }}</small></td>
+<td class="sel-lain">{% if p.kbli %}<span class="kode">{{ p.kbli_id }}</span><small class="redup" style="display:block">{{ p.kbli.get_sektor_display }}</small>{% else %}-{% endif %}</td>
+<td class="sel-lain">{{ p.kecamatan.nama }}</td>
+<td class="sel-lain">{{ p.skala|default:"-" }}</td>
+<td class="sel-lain angka">{{ p.tahun|default:"-" }}</td>
+<td class="sel-lain angka">{{ p.investasi|rupiah }}</td>
+<td class="sel-lain angka">{{ p.tki|ribuan }}</td></tr>
+{% empty %}<tr><td colspan="7" class="kosong">{% if aktif %}Tidak ada data yang cocok dengan filter.{% else %}Belum ada data. {% if bisa_kelola %}<a href="{% url 'basisdata:oss_impor' %}">Impor file ekspor OSS-RBA</a>.{% endif %}{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% include "basisdata/_paginasi.html" %}
+</section>
+{% endblock %}

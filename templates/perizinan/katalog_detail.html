@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block judul %}{{ j.nama }}{% endblock %}{% block lebar %}penuh{% endblock %}
+{% block isi %}<div class="kepala"><div><h1>{{ j.nama }}</h1>{% if j.keterangan %}<p>{{ j.keterangan }}</p>{% endif %}</div>
+<a class="tombol aksen" href="{% if user.is_authenticated %}{% url 'perizinan:baru' %}?jenis={{ j.pk }}{% else %}{% url 'akun:daftar' %}{% endif %}">{% include "ikon/plus.svg" %}Ajukan izin ini</a></div>
+<div class="kisi kisi-detail">
+<section class="kartu"><div class="kartu-kepala"><div><h2>Persyaratan</h2><p>Siapkan dalam bentuk PDF atau JPG, maksimal 5 MB per berkas.</p></div></div>
+<ol style="margin:0;padding-left:20px;display:grid;gap:10px">{% for s in syarat %}<li><b>{{ s.nama }}</b>{% if not s.wajib %} <span class="redup kecil">(tidak wajib)</span>{% endif %}{% if s.berlaku_untuk != 'semua' %} <span class="chip">{{ s.get_berlaku_untuk_display }}</span>{% endif %}{% if s.keterangan %}<br><span class="redup kecil">{{ s.keterangan }}</span>{% endif %}</li>{% endfor %}</ol>
+<p class="redup kecil" style="margin-top:16px">Formulir juga meminta alamat lokasi objek, kecamatan, luas tanah, titik koordinat, dan rencana kegiatan.</p></section>
+<section class="kartu"><div class="kartu-kepala"><h2>Alur</h2></div>
+<ol class="langkah" style="grid-template-columns:1fr">
+<li><span class="bulat">1</span><b>Daftar akun dan isi formulir</b><small>Verifikasi akun dengan kode OTP di email</small></li>
+<li><span class="bulat">2</span><b>Unggah syarat dan kirim</b><small>Pantau status kapan saja</small></li>
+<li><span class="bulat">3</span><b>Verifikasi administrasi</b><small>Petugas DPMPTSP memeriksa dokumen; bila kurang, dikembalikan dengan catatan</small></li>
+{% if j.perlu_kajian_teknis %}<li><span class="bulat">4</span><b>Penilaian teknis</b><small>Oleh {{ j.instansi.nama|default:"instansi teknis" }}</small></li>{% endif %}
+<li><span class="bulat">{% if j.perlu_kajian_teknis %}5{% else %}4{% endif %}</span><b>Izin terbit</b><small>Unduh dokumen izin ber-QR dari akun Anda</small></li>
+</ol>
+<p class="redup kecil">Batas waktu layanan: {{ j.sla_hari }} hari sejak permohonan lengkap diajukan.</p></section>
+</div>{% endblock %}

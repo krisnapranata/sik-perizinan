@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block judul %}Profil {{ pemohon.nama }}{% endblock %}
+{% block isi %}<div class="kepala"><div><h1>{% if pemohon.pk %}{{ pemohon.nama }}{% else %}Lengkapi data pemohon{% endif %}</h1><p>{% if user.petugas %}Data pemohon yang dilayani di kantor.{% else %}Data diri pemohon. NIB hanya diisi bila pemohon memilikinya (tidak wajib untuk izin nonberusaha).{% endif %}</p></div>
+{% if user.petugas %}<a class="tombol aksen" href="{% url 'perizinan:baru_loket' pemohon.pk %}">{% include "ikon/plus.svg" %}Buat permohonan</a>{% endif %}</div>
+<div class="kartu sempit">
+{% if pemohon.bukti_nib %}<div class="pesan" style="box-shadow:none">Bukti NIB tersimpan. {% url 'perizinan:unduh_nib' pemohon.pk as url_nib %}{% include "_berkas.html" with url=url_nib berkas=pemohon.bukti_nib judul="Bukti NIB" %}</div>{% endif %}
+<form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_div }}<button class="aksen">Simpan profil</button></form></div>{% endblock %}

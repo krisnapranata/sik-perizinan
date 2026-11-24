@@ -1,0 +1,37 @@
+services:
+  web:
+    build: .
+    image: sik-perizinan:latest
+    container_name: sik-web
+    env_file: .env
+    # Host network agar Django menjangkau MariaDB di localhost server
+    network_mode: host
+    volumes:
+      - static_data:/app/staticfiles
+      # Berkas unggahan di host agar mudah dicadangkan (scripts/backup.sh)
+      - ./media:/app/media
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/sehat/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: sik-nginx
+    network_mode: host
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - ./nginx/sik.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/sik-proxy.inc:/etc/nginx/conf.d/sik-proxy.inc:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - static_data:/var/www/static:ro
+      - ./media:/var/www/media:ro
+    restart: unless-stopped
+
+volumes:
+  static_data:

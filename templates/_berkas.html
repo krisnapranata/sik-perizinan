@@ -1,0 +1,1 @@
+{% load berkas %}{% with jenis=berkas|jenis_pratinjau %}<span class="tautan-berkas">{% if jenis %}<a href="{{ url }}?lihat=1" data-pratinjau="{{ jenis }}" data-judul="{{ judul }}" data-unduh="{{ url }}">{% include "ikon/eye.svg" %}Lihat</a>{% endif %}<a href="{{ url }}" class="redup">{% include "ikon/download.svg" %}Unduh</a></span>{% endwith %}

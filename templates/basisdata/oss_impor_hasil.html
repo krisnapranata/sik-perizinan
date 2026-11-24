@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% load angka %}{% block judul %}Hasil impor{% endblock %}
+{% block isi %}
+<div class="kepala"><div><h1>Hasil impor</h1><p>{{ i.nama_berkas }} · {{ i.waktu|date:"j M Y, H.i" }} · {{ i.pengguna.nama }}</p></div>
+<div class="deret"><a class="tombol garis" href="{% url 'basisdata:oss_impor' %}">Impor lagi</a><a class="tombol aksen" href="{% url 'basisdata:oss_daftar' %}">Lihat data</a></div></div>
+<div class="kisi kisi-kpi">
+  <div class="kartu kpi"><div class="kpi-atas">Baris dibaca</div><div class="kpi-angka">{{ i.jumlah_baris|ribuan }}</div></div>
+  <div class="kartu kpi sorot"><div class="kpi-atas">Proyek baru</div><div class="kpi-angka">{{ i.baru|ribuan }}</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Diperbarui / tetap</div><div class="kpi-angka">{{ i.diperbarui|ribuan }} / {{ i.tetap|ribuan }}</div></div>
+  <div class="kartu kpi"><div class="kpi-atas">Gagal</div><div class="kpi-angka" {% if i.gagal %}style="color:var(--merah)"{% endif %}>{{ i.gagal|ribuan }}</div></div>
+</div>
+{% if i.laporan %}<section class="kartu tanpa-isi jeda"><div class="kartu-kepala" style="padding:20px 20px 0"><div><h2>Baris bermasalah</h2><p>Perbaiki di file lalu unggah ulang; baris yang sudah masuk tidak akan tergandakan.{% if i.gagal > i.laporan|length %} Ditampilkan {{ i.laporan|length }} dari {{ i.gagal }}.{% endif %}</p></div></div>
+<div class="gulir"><table class="tabel"><thead><tr><th class="angka">Baris</th><th>Masalah</th></tr></thead><tbody>
+{% for nomor, pesan in i.laporan %}<tr><td class="angka">{{ nomor }}</td><td>{{ pesan }}</td></tr>{% endfor %}</tbody></table></div></section>{% endif %}
+{% endblock %}

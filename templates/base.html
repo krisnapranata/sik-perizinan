@@ -1,0 +1,142 @@
+{% load static %}<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block judul %}Layanan Perizinan{% endblock %} | PANDU LOTIM</title>
+<script>try{var t=localStorage.getItem("sik-tema");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="preload" href="{% static 'fonts/geist.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{% static 'css/sik.css' %}">
+</head>
+<body>
+<a class="lompat" href="#isi">Langsung ke isi</a>
+{% with u=request.resolver_match.url_name %}
+{% if user.is_authenticated %}
+<div class="kerangka">
+  <aside class="sisi" id="sisi" aria-label="Navigasi">
+    <a class="merek" href="{% url 'beranda' %}"><span class="merek-tanda" aria-hidden="true">PL</span><span><b>PANDU LOTIM</b><small>DPMPTSP Lombok Timur</small></span></a>
+    {% if user.pemeriksa or user.peran == 'pemohon' %}
+    <a class="navi" href="{% url 'perizinan:dasbor' %}" {% if u == 'dasbor' and request.resolver_match.app_name == 'perizinan' %}aria-current="page"{% endif %}>{% include "ikon/layout-dashboard.svg" %}Dashboard</a>{% endif %}
+    {% if user.pemeriksa %}
+      <a class="navi" href="{% url 'perizinan:antrean' %}" {% if u == 'antrean' %}aria-current="page"{% endif %}>{% include "ikon/inbox.svg" %}Antrean saya{% if jumlah_antrean %}<span class="jumlah">{{ jumlah_antrean }}</span>{% endif %}</a>
+      <a class="navi" href="{% url 'perizinan:daftar' %}" {% if u == 'daftar' or u == 'detail' %}aria-current="page"{% endif %}>{% include "ikon/files.svg" %}{% if user.petugas %}Semua permohonan{% else %}Permohonan diteruskan{% endif %}</a>
+    {% endif %}
+    {% if user.petugas %}
+      <a class="navi" href="{% url 'akun:loket' %}" {% if u == 'loket' or u == 'loket_pemohon' or u == 'loket_daftar' %}aria-current="page"{% endif %}>{% include "ikon/store.svg" %}Layanan berbantuan</a>
+    {% elif user.peran == 'pemohon' %}
+      <a class="navi" href="{% url 'perizinan:daftar' %}" {% if u == 'daftar' or u == 'detail' %}aria-current="page"{% endif %}>{% include "ikon/files.svg" %}Permohonan saya</a>
+      <a class="navi" href="{% url 'perizinan:baru' %}" {% if u == 'baru' %}aria-current="page"{% endif %}>{% include "ikon/plus.svg" %}Ajukan izin</a>
+      <a class="navi" href="{% url 'akun:profil' %}" {% if u == 'profil' %}aria-current="page"{% endif %}>{% include "ikon/user.svg" %}Profil</a>
+    {% endif %}
+    {% if user.is_superuser or user.petugas %}
+      <div class="grup">Database Perizinan</div>
+      <a class="navi" href="{% url 'basisdata:oss_daftar' %}" {% if u == 'oss_daftar' or u == 'oss_detail' or u == 'usaha_detail' %}aria-current="page"{% endif %}>{% include "ikon/store.svg" %}Berusaha (OSS-RBA)</a>
+      <a class="navi" href="{% url 'basisdata:nonoss_daftar' %}" {% if u == 'nonoss_daftar' or u == 'nonoss_detail' or u == 'nonoss_tambah' or u == 'nonoss_ubah' %}aria-current="page"{% endif %}>{% include "ikon/files.svg" %}Nonberusaha</a>
+      <a class="navi" href="{% url 'basisdata:oss_impor' %}" {% if u == 'oss_impor' or u == 'oss_impor_hasil' %}aria-current="page"{% endif %}>{% include "ikon/upload.svg" %}Impor OSS</a>
+    {% endif %}
+    <div class="grup">Analitik</div>
+    <a class="navi" href="{% url 'basisdata:statistik' %}" {% if u == 'statistik' %}aria-current="page"{% endif %}>{% include "ikon/chart-column.svg" %}Data dan analisis</a>
+    {% if user.petugas or user.peran == 'pimpinan' or user.is_staff %}
+      <a class="navi" href="{% url 'laporan:dasbor' %}" {% if request.resolver_match.app_name == 'laporan' %}aria-current="page"{% endif %}>{% include "ikon/file-text.svg" %}Laporan layanan</a>{% endif %}
+    <div class="grup">Lainnya</div>
+    <a class="navi" href="{% url 'perizinan:katalog' %}" {% if u == 'katalog' or u == 'katalog_detail' %}aria-current="page"{% endif %}>{% include "ikon/file-text.svg" %}Jenis izin dan syarat</a>
+    <a class="navi" href="{% url 'perizinan:cek_status' %}" {% if u == 'cek_status' %}aria-current="page"{% endif %}>{% include "ikon/search.svg" %}Cek status</a>
+    <a class="navi" href="{% url 'akun:ganti_password' %}" {% if u == 'ganti_password' %}aria-current="page"{% endif %}>{% include "ikon/user.svg" %}Ganti password</a>
+    {% if user.is_staff %}<a class="navi" href="{% url 'admin:akun_user_impor' %}">{% include "ikon/upload.svg" %}Impor pengguna</a>
+    <a class="navi" href="{% url 'admin:index' %}">{% include "ikon/settings.svg" %}Pengaturan sistem</a>{% endif %}
+    <div class="sisi-bawah">
+      <span class="avatar" aria-hidden="true">{{ user.nama|slice:":1"|upper }}</span>
+      <span class="pengguna"><b>{{ user.nama }}</b><small>{{ user.get_peran_display }}</small></span>
+      <form method="post" action="{% url 'akun:keluar' %}">{% csrf_token %}<button class="tombol-ikon" title="Keluar" aria-label="Keluar">{% include "ikon/log-out.svg" %}</button></form>
+    </div>
+  </aside>
+  <div class="tirai" id="tirai"></div>
+  <div class="utama">
+    <header class="atas">
+      <button class="tombol-ikon burger" id="buka-menu" aria-label="Buka menu" aria-controls="sisi" aria-expanded="false">{% include "ikon/menu.svg" %}</button>
+      <form class="cari" method="get" action="{% url 'perizinan:cek_status' %}" role="search">{% include "ikon/search.svg" %}<label class="sr" for="cari-nomor">Cari nomor registrasi</label><input id="cari-nomor" name="nomor" placeholder="Cari nomor registrasi" autocomplete="off" spellcheck="false"></form>
+      <div class="kanan"><button class="tombol-ikon" id="ganti-tema" aria-label="Ganti tema terang atau gelap"><span class="tema-gelap">{% include "ikon/moon.svg" %}</span><span class="tema-terang">{% include "ikon/sun.svg" %}</span></button></div>
+    </header>
+    <main class="isi" id="isi">
+{% else %}
+<div class="publik">
+  <header class="publik-atas">
+    <a class="merek" href="{% url 'beranda' %}" style="padding:0"><span class="merek-tanda" aria-hidden="true">PL</span><span><b>PANDU LOTIM</b><small>DPMPTSP Lombok Timur</small></span></a>
+    <nav aria-label="Menu utama">
+      <a href="{% url 'perizinan:katalog' %}">Layanan izin</a>
+      <a href="{% url 'basisdata:statistik' %}">Data perizinan</a>
+      <a href="{% url 'perizinan:cek_status' %}">Cek status</a>
+      <a href="{% url 'akun:masuk' %}">Masuk</a>
+      <a class="tombol kecil" href="{% url 'akun:daftar' %}">Daftar</a>
+      <button class="tombol-ikon" id="ganti-tema" aria-label="Ganti tema terang atau gelap"><span class="tema-gelap">{% include "ikon/moon.svg" %}</span><span class="tema-terang">{% include "ikon/sun.svg" %}</span></button>
+    </nav>
+  </header>
+  {% block panggung %}{% endblock %}
+  <main class="publik-isi {% block lebar %}{% endblock %}" id="isi">
+{% endif %}
+{% endwith %}
+{% for m in messages %}<div class="pesan {{ m.tags }}" role="{% if m.tags == 'error' %}alert{% else %}status{% endif %}">{{ m }}</div>{% endfor %}
+{% block isi %}{% endblock %}
+{% if user.is_authenticated %}
+    </main>
+  </div>
+</div>
+{% else %}
+  </main>
+  <footer class="kaki">PANDU LOTIM · Portal Administrasi dan Data Usaha, DPMPTSP Kabupaten Lombok Timur. Perizinan berusaha tetap diterbitkan melalui OSS-RBA.</footer>
+</div>
+{% endif %}
+{% if user.is_authenticated %}
+<dialog class="pratinjau" id="pratinjau" aria-labelledby="pratinjau-judul">
+  <div class="pratinjau-kepala">
+    <h2 id="pratinjau-judul">Pratinjau berkas</h2>
+    <div class="deret">
+      <a class="tombol garis kecil" id="pratinjau-tab" target="_blank" rel="noopener">{% include "ikon/arrow-up-right.svg" %}Tab baru</a>
+      <a class="tombol garis kecil" id="pratinjau-unduh">{% include "ikon/download.svg" %}Unduh</a>
+      <button class="tombol-ikon" id="pratinjau-tutup" aria-label="Tutup pratinjau">{% include "ikon/x.svg" %}</button>
+    </div>
+  </div>
+  <div class="pratinjau-isi">
+    <iframe id="pratinjau-pdf" title="Pratinjau PDF" hidden></iframe>
+    <img id="pratinjau-gambar" alt="" hidden>
+  </div>
+</dialog>
+{% endif %}
+<script>
+(function(){
+  var t=document.getElementById("ganti-tema");
+  if(t)t.addEventListener("click",function(){
+    var r=document.documentElement,gelap=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+    r.dataset.theme=gelap?"light":"dark";try{localStorage.setItem("sik-tema",r.dataset.theme)}catch(e){}
+  });
+  var s=document.getElementById("sisi"),b=document.getElementById("buka-menu"),ti=document.getElementById("tirai");
+  function atur(buka){if(!s)return;s.classList.toggle("terbuka",buka);ti.classList.toggle("terbuka",buka);b.setAttribute("aria-expanded",buka)}
+  if(b)b.addEventListener("click",function(){atur(!s.classList.contains("terbuka"))});
+  if(ti)ti.addEventListener("click",function(){atur(false)});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")atur(false)});
+
+  /* Pratinjau berkas: PDF di penampil bawaan browser, JPG sebagai gambar. */
+  var dlg=document.getElementById("pratinjau");
+  if(dlg&&dlg.showModal){
+    var pdf=document.getElementById("pratinjau-pdf"),img=document.getElementById("pratinjau-gambar");
+    document.addEventListener("click",function(e){
+      var a=e.target.closest("a[data-pratinjau]");
+      if(!a||!a.dataset.pratinjau||e.ctrlKey||e.metaKey||e.shiftKey)return;
+      e.preventDefault();
+      var gambar=a.dataset.pratinjau==="gambar";
+      document.getElementById("pratinjau-judul").textContent=a.dataset.judul||"Pratinjau berkas";
+      document.getElementById("pratinjau-unduh").href=a.dataset.unduh;
+      document.getElementById("pratinjau-tab").href=a.href;
+      pdf.hidden=gambar;img.hidden=!gambar;
+      if(gambar){img.src=a.href;img.alt=a.dataset.judul||"";pdf.removeAttribute("src")}else{pdf.src=a.href;img.removeAttribute("src")}
+      dlg.showModal();
+    });
+    function tutup(){dlg.close()}
+    document.getElementById("pratinjau-tutup").addEventListener("click",tutup);
+    dlg.addEventListener("click",function(e){if(e.target===dlg)tutup()});
+    dlg.addEventListener("close",function(){pdf.removeAttribute("src");img.removeAttribute("src")});
+  }
+})();
+</script>
+</body>
+</html>

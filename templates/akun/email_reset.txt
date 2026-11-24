@@ -1,0 +1,6 @@
+Yth. {{ user.nama }},
+
+Buka tautan berikut untuk membuat password baru:
+{{ protocol }}://{{ domain }}{% url 'akun:reset_konfirmasi' uidb64=uid token=token %}
+
+Abaikan email ini bila Anda tidak memintanya.

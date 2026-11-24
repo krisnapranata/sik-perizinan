@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block judul %}Laporan {{ d.judul_bulan|date:"F Y" }}{% endblock %}
+{% block isi %}
+<div class="kepala"><div><h1>Laporan layanan izin</h1><p>{{ d.judul_bulan|date:"F Y" }}</p></div>
+<div class="deret"><form class="deret" method="get"><label class="sr" for="bulan">Bulan</label><input id="bulan" type="month" name="bulan" value="{{ d.judul_bulan|date:'Y-m' }}" style="width:auto;min-height:40px"><button class="garis">Tampilkan</button></form>
+<a class="tombol garis" href="{% url 'laporan:ekspor_excel' %}?bulan={{ d.judul_bulan|date:'Y-m' }}">{% include "ikon/download.svg" %}Excel</a><a class="tombol aksen" href="{% url 'laporan:ekspor_pdf' %}?bulan={{ d.judul_bulan|date:'Y-m' }}">{% include "ikon/download.svg" %}PDF</a></div></div>
+
+<div class="kisi kisi-2-1">
+  <div class="kisi" style="grid-template-columns:1fr 1fr;align-content:start">
+    <div class="kartu kpi sorot"><div class="kpi-atas">Permohonan masuk<span class="kpi-ikon">{% include "ikon/file-text.svg" %}</span></div><div class="kpi-angka">{{ d.total }}</div><div class="kpi-bawah">dibuat pada {{ d.judul_bulan|date:"F Y" }}</div></div>
+    <div class="kartu kpi"><div class="kpi-atas">Rata-rata lama proses<span class="kpi-ikon">{% include "ikon/clock.svg" %}</span></div><div class="kpi-angka">{% if d.lama_proses.rata_hari is not None %}{{ d.lama_proses.rata_hari }} hr{% else %}-{% endif %}</div><div class="kpi-bawah">{{ d.lama_proses.jumlah }} izin terbit bulan ini</div></div>
+    <section class="kartu" style="grid-column:1/-1"><div class="kartu-kepala"><h2>Menurut jenis izin</h2></div><div class="batang">{% for n, j in d.per_jenis %}<div class="batang-baris"><span>{{ n }}</span><b>{{ j }}</b><span class="rel" aria-hidden="true"><i style="width:{% widthratio j d.total 100 %}%"></i></span></div>{% empty %}<p class="redup">Belum ada permohonan bulan ini.</p>{% endfor %}</div></section>
+  </div>
+  <section class="kartu"><div class="kartu-kepala"><h2>Menurut status</h2></div><div class="batang">{% for n, j in d.per_status %}<div class="batang-baris"><span>{{ n }}</span><b>{{ j }}</b><span class="rel" aria-hidden="true"><i style="width:{% widthratio j d.total 100 %}%"></i></span></div>{% empty %}<p class="redup">Belum ada permohonan bulan ini.</p>{% endfor %}</div></section>
+</div>
+
+<section class="kartu tanpa-isi jeda"><div class="kartu-kepala"><div><h2>Rata-rata lama di setiap tahap</h2><p>Dari masuk tahap sampai berkas diteruskan atau diputuskan</p></div></div><div class="gulir"><table class="tabel">
+<thead><tr><th>Tahap</th><th class="angka">Berkas</th><th class="angka">Rata-rata (jam)</th></tr></thead><tbody>
+{% for n, j, r in d.lama_tahap %}<tr><td>{{ n }}</td><td class="angka">{{ j }}</td><td class="angka">{{ r }}</td></tr>{% empty %}<tr><td colspan="3" class="kosong">Belum ada berkas yang diperiksa bulan ini.</td></tr>{% endfor %}</tbody></table></div></section>
+
+<section class="kartu tanpa-isi jeda"><div class="kartu-kepala"><div><h2>Keputusan per petugas</h2><p>Termasuk penilaian instansi teknis</p></div></div><div class="gulir"><table class="tabel">
+<thead><tr><th>Petugas</th><th class="angka">Lolos tahap</th><th class="angka">Perlu perbaikan</th><th class="angka">Ditolak</th><th class="angka">Terbit</th><th class="angka">Total</th></tr></thead><tbody>
+{% for v in d.per_verifikator %}<tr><td class="sel-utama"><span class="deret"><span class="avatar kecil" aria-hidden="true">{{ v.nama|slice:":1"|upper }}</span>{{ v.nama }}</span></td><td class="angka">{{ v.teruskan }}</td><td class="angka">{{ v.kembalikan }}</td><td class="angka">{{ v.tolak }}</td><td class="angka">{{ v.terbit }}</td><td class="angka"><b>{{ v.total }}</b></td></tr>
+{% empty %}<tr><td colspan="6" class="kosong">Belum ada keputusan bulan ini.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

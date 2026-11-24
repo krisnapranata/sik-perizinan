@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block judul %}Permohonan{% endblock %}
+{% block isi %}<div class="kepala"><div><h1>{% if user.peran == 'pemohon' %}Permohonan saya{% elif user.petugas %}Semua permohonan{% else %}Permohonan diteruskan ke {{ user.instansi }}{% endif %}</h1><p>{{ halaman.paginator.count }} permohonan</p></div>{% if user.peran == 'pemohon' %}<a class="tombol aksen" href="{% url 'perizinan:baru' %}">{% include "ikon/plus.svg" %}Ajukan izin</a>{% endif %}</div>
+<section class="kartu tanpa-isi">{% include "perizinan/_tabel.html" with kosong="Belum ada permohonan." %}</section>{% endblock %}
