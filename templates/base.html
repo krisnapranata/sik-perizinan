@@ -45,6 +45,7 @@
     <a class="navi" href="{% url 'investasi:daftar' %}" {% if request.resolver_match.app_name == 'investasi' %}aria-current="page"{% endif %}>{% include "ikon/chart-column.svg" %}Potensi investasi</a>
     <a class="navi" href="{% url 'perizinan:cek_status' %}" {% if u == 'cek_status' %}aria-current="page"{% endif %}>{% include "ikon/search.svg" %}Cek status</a>
     <a class="navi" href="{% url 'akun:ganti_password' %}" {% if u == 'ganti_password' %}aria-current="page"{% endif %}>{% include "ikon/user.svg" %}Ganti password</a>
+    {% if user.is_superuser or user.peran == 'admin' %}<a class="navi" href="{% url 'panduan' %}" {% if u == 'panduan' %}aria-current="page"{% endif %}>{% include "ikon/file-text.svg" %}Panduan aplikasi</a>{% endif %}
     {% if user.is_staff %}<a class="navi" href="{% url 'admin:akun_user_impor' %}">{% include "ikon/upload.svg" %}Impor pengguna</a>
     <a class="navi" href="{% url 'admin:index' %}">{% include "ikon/settings.svg" %}Pengaturan sistem</a>{% endif %}
     <div class="sisi-bawah">

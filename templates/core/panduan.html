@@ -1,0 +1,279 @@
+{% extends "base.html" %}{% block judul %}Panduan aplikasi{% endblock %}
+{% block isi %}
+{# Hanya Admin Sistem (core.views.panduan). Naskah sama dengan dokumen "Panduan Fitur PANDU LOTIM". #}
+<div class="kepala"><div><h1>Panduan Fitur PANDU LOTIM</h1>
+<p>Portal Administrasi dan Data Usaha DPMPTSP Kabupaten Lombok Timur. Halaman ini hanya terlihat oleh Admin Sistem.</p></div>
+<button type="button" class="tombol garis" onclick="window.print()">{% include "ikon/download.svg" %}Cetak / simpan PDF</button></div>
+
+<div class="panduan">
+<nav class="kartu panduan-isi" aria-label="Daftar isi">
+  <b>Daftar isi</b>
+  <ol>
+    <li><a href="#pengantar">Pengantar</a></li>
+    <li><a href="#peran">Peran pengguna dan akun demo</a></li>
+    <li><a href="#publik">Halaman publik</a></li>
+    <li><a href="#daftar">Pendaftaran pemohon dengan kode OTP</a></li>
+    <li><a href="#alur">Alur permohonan sampai izin terbit</a></li>
+    <li><a href="#loket">Layanan berbantuan di loket</a></li>
+    <li><a href="#database">Database perizinan</a></li>
+    <li><a href="#laporan">Dashboard, analisis, dan laporan</a></li>
+    <li><a href="#investasi">Pusat Informasi Investasi</a></li>
+    <li><a href="#pengaturan">Pengaturan sistem</a></li>
+    <li><a href="#keamanan">Keamanan dan perlindungan data</a></li>
+    <li><a href="#demo">Skenario demo presentasi</a></li>
+    <li><a href="#status">Status pengembangan</a></li>
+  </ol>
+</nav>
+
+<div class="panduan-teks">
+<section class="kartu" id="pengantar"><h2>Pengantar</h2>
+<p>PANDU LOTIM menyatukan tiga pekerjaan DPMPTSP Lombok Timur dalam satu portal: <b>layanan izin nonberusaha secara daring</b>, <b>database perizinan</b> (OSS-RBA dan NonOSS), dan <b>informasi investasi</b> untuk calon investor. Perizinan berusaha tetap diterbitkan lewat OSS-RBA; PANDU LOTIM mengolah datanya untuk analisis dan laporan.</p>
+<p>Yang berubah bagi kantor:</p>
+<ul>
+  <li>Pemohon mengajukan izin, mengunggah syarat, dan memantau status dari rumah. Kantor tidak lagi menerima berkas kertas untuk dicek satu per satu.</li>
+  <li>Setiap permohonan punya nomor registrasi, batas waktu layanan, dan riwayat yang tercatat. Pimpinan melihat kinerja layanan tanpa menunggu rekap manual.</li>
+  <li>Data OSS-RBA yang selama ini berupa ekspor Excel bisa dicari, disaring, dan direkap per kecamatan, sektor, dan tahun.</li>
+  <li>Calon investor melihat potensi dan peluang investasi lengkap dengan peta lokasinya.</li>
+</ul>
+<p>Portal ini mengikuti PRD Portal Data Perizinan PANDU LOTIM. Kode fitur di panduan ini (misalnya IZ-01, IN-03) merujuk ke PRD tersebut.</p>
+</section>
+
+<section class="kartu" id="peran"><h2>Peran pengguna dan akun demo</h2>
+<p>Ada lima peran. Setiap peran hanya melihat menu dan data yang menjadi tugasnya. Akun demo di bawah hanya ada di komputer presentasi; di server produksi akun dibuat oleh Admin Sistem.</p>
+<div class="gulir"><table class="tabel">
+<thead><tr><th>Peran</th><th>Tugas utama</th><th>Akun demo</th><th>Password</th></tr></thead>
+<tbody>
+<tr><td>Pemohon</td><td>Mendaftar, mengajukan izin, mengunggah syarat, memantau status, mengunduh izin</td><td class="kode">pemohon@sik.test</td><td class="kode">demo123</td></tr>
+<tr><td>Petugas DPMPTSP</td><td>Front office dan verifikasi dokumen, meneruskan ke instansi teknis, menerbitkan izin, layanan berbantuan, mengelola database perizinan</td><td class="kode">petugas@sik.test</td><td class="kode">demo123</td></tr>
+<tr><td>Instansi Teknis (contoh: Dinas PUPR)</td><td>Menilai permohonan yang diteruskan dan memberi rekomendasi</td><td class="kode">pupr@sik.test</td><td class="kode">demo123</td></tr>
+<tr><td>Pimpinan</td><td>Melihat dashboard, statistik, dan laporan layanan</td><td class="kode">pimpinan@sik.test</td><td class="kode">demo123</td></tr>
+<tr><td>Admin Sistem</td><td>Mengelola akun, jenis izin, syarat, template email, konten investasi, dan log audit</td><td class="kode">admin@sik.test</td><td class="kode">demo123</td></tr>
+</tbody></table></div>
+<p>Login memakai <b>email</b>, bukan nama pengguna, di halaman <b>Masuk</b>. Untuk berganti akun saat presentasi, klik ikon keluar di pojok kiri bawah sidebar.</p>
+</section>
+
+<section class="kartu" id="publik"><h2>Halaman publik (tanpa login)</h2>
+<p>Siapa pun bisa membuka halaman berikut dari menu atas, tanpa akun.</p>
+<div class="gulir"><table class="tabel">
+<thead><tr><th>Menu</th><th>Alamat</th><th>Isi</th></tr></thead>
+<tbody>
+<tr><td>Beranda</td><td class="kode"><a href="{% url 'beranda' %}">/</a></td><td>Ringkasan jumlah pelaku usaha, proyek, nilai investasi, dan tenaga kerja; ajakan mengajukan izin</td></tr>
+<tr><td>Layanan izin</td><td class="kode"><a href="{% url 'perizinan:katalog' %}">/layanan/</a></td><td>Katalog jenis izin nonberusaha: persyaratan, alur, dan batas waktu layanan. Bisa dibaca sebelum mendaftar (IZ-02)</td></tr>
+<tr><td>Data perizinan</td><td class="kode"><a href="{% url 'basisdata:statistik' %}">/statistik/</a></td><td>Tren per tahun, sebaran per kecamatan dan sektor, layanan izin online, perizinan nonberusaha. Hanya angka agregat, tanpa data pribadi; bisa diekspor Excel/PDF</td></tr>
+<tr><td>Investasi</td><td class="kode"><a href="{% url 'investasi:daftar' %}">/investasi/</a></td><td>Potensi, peluang, dan proyek siap tawar dengan peta Google Maps (lihat <a href="#investasi">Pusat Informasi Investasi</a>)</td></tr>
+<tr><td>Cek status</td><td class="kode"><a href="{% url 'perizinan:cek_status' %}">/cek-status/</a></td><td>Status permohonan dari nomor registrasi: jenis izin, tahapan, dan tanggal. Tanpa nama atau data pribadi pemohon</td></tr>
+<tr><td>Verifikasi izin</td><td class="kode">/verifikasi/&lt;kode&gt;/</td><td>Halaman yang terbuka saat QR di dokumen izin dipindai, untuk memastikan izin itu asli</td></tr>
+</tbody></table></div>
+<p>Semua halaman menyesuaikan layar HP dan punya mode gelap (ikon bulan/matahari di pojok kanan atas).</p>
+</section>
+
+<section class="kartu" id="daftar"><h2>Pendaftaran pemohon dengan kode OTP</h2>
+<p>Pemohon mendaftar sendiri dan mengaktifkan akun dengan kode 6 digit yang dikirim ke email (IZ-01). Ini memastikan alamat email benar sebelum notifikasi izin dikirim ke sana.</p>
+<ol>
+  <li>Klik <b>Daftar</b> di pojok kanan atas.</li>
+  <li>Pilih tipe pemohon (<b>perorangan</b> atau <b>badan hukum</b>), lalu isi nama, NIK, NPWP, nomor HP, alamat, email, dan password.</li>
+  <li>Sistem mengirim kode OTP ke email. Kode berlaku <b>15 menit</b>, boleh salah paling banyak <b>5 kali</b>, dan bisa dikirim ulang setelah <b>1 menit</b>.</li>
+  <li>Masukkan kode; akun langsung aktif dan pemohon bisa mengajukan izin.</li>
+</ol>
+<p>Setelah aktif, pemohon melengkapi <b>Profil</b> (termasuk NIB dan bukti NIB untuk badan usaha). Lupa password bisa diatur ulang lewat tautan <b>Lupa password</b> di halaman Masuk.</p>
+<p>Syarat di server: pengaturan email pengirim (SMTP) harus sudah diisi. Tanpa itu kode OTP tidak terkirim dan pemohon tidak bisa mendaftar. Langkahnya ada di <span class="kode">docs/PANDUAN_EMAIL.md</span> (sandi aplikasi Gmail atau email dinas go.id).</p>
+</section>
+
+<section class="kartu" id="alur"><h2>Alur permohonan sampai izin terbit</h2>
+<p>Setiap permohonan bergerak melalui tujuh status yang sama (PRD 6.1), dan setiap perpindahan tercatat di riwayat serta dikirim ke email pemohon (IZ-07, IZ-08).</p>
+<figure class="panduan-diagram">
+<svg viewBox="0 80 760 260" role="img" aria-label="Izin terbit setelah verifikasi petugas, dan penilaian teknis bila diperlukan" font-size="13">
+  <defs><marker id="alur-panah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="d-panah"/></marker></defs>
+  <g class="d-garis" fill="none" marker-end="url(#alur-panah)">
+    <path d="M172 168H212"/><path d="M360 158H400"/><path d="M548 168H588"/><path d="M316 140V100H632V140"/>
+    <path d="M306 196V272"/><path d="M266 272V196"/><path d="M360 182H380V300H400"/><path d="M474 196V272"/><path d="M662 196V272"/>
+  </g>
+  <g class="d-kotak">
+    <rect x="24" y="140" width="148" height="56" rx="8"/><rect x="212" y="140" width="148" height="56" rx="8"/>
+    <rect x="400" y="140" width="148" height="56" rx="8"/><rect x="588" y="140" width="148" height="56" rx="8"/>
+    <rect x="212" y="272" width="148" height="56" rx="8"/>
+  </g>
+  <rect class="d-tolak" x="400" y="272" width="148" height="56" rx="8"/>
+  <rect class="d-terbit" x="588" y="272" width="148" height="56" rx="8"/>
+  <g class="d-nama" text-anchor="middle" font-weight="600">
+    <text x="98" y="164">Draf</text><text x="286" y="164">Diajukan</text><text x="474" y="164">Penilaian teknis</text><text x="662" y="164">Disetujui</text>
+    <text x="286" y="296">Perlu perbaikan</text><text x="474" y="296">Ditolak</text><text x="662" y="296">Terbit</text>
+  </g>
+  <g class="d-ket" text-anchor="middle" font-size="11.5">
+    <text x="98" y="182">pemohon mengisi</text><text x="286" y="182">verifikasi petugas</text><text x="474" y="182">instansi teknis</text><text x="662" y="182">siap diterbitkan</text>
+    <text x="286" y="314">pemohon melengkapi</text><text x="474" y="314">alasan dicatat</text><text x="662" y="314">dokumen ber-QR</text>
+  </g>
+  <g class="d-ket" font-size="11.5">
+    <text x="192" y="132" text-anchor="middle">Kirim</text><text x="380" y="132" text-anchor="middle">Teruskan</text><text x="568" y="132" text-anchor="middle">Memenuhi</text>
+    <text x="474" y="92" text-anchor="middle">Setujui, bila jenis izin tanpa penilaian teknis</text>
+    <text x="258" y="238" text-anchor="end">Kirim ulang</text>
+    <text x="312" y="230">Minta</text><text x="312" y="246">perbaikan</text>
+    <text x="386" y="238">Tolak</text>
+    <text x="480" y="230">Tidak</text><text x="480" y="246">memenuhi</text>
+    <text x="668" y="238">Terbitkan</text>
+  </g>
+</svg>
+<figcaption>Alur permohonan izin nonberusaha · 7 status</figcaption>
+</figure>
+<p>Permohonan yang belum lengkap kembali ke pemohon untuk dilengkapi, lalu dikirim ulang. Jenis izin yang perlu kajian diteruskan ke instansi teknis; yang tidak, langsung disetujui petugas.</p>
+<div class="gulir"><table class="tabel">
+<thead><tr><th>Langkah</th><th>Siapa</th><th>Yang dilakukan di sistem</th></tr></thead>
+<tbody>
+<tr><td>1. Mengajukan</td><td>Pemohon</td><td>Memilih jenis izin, mengisi formulir (lokasi, kecamatan, luas tanah, titik koordinat, rencana kegiatan), mengunggah syarat PDF/JPG maksimal 5 MB per berkas, lalu <b>Kirim</b>. Nomor registrasi dibuat otomatis (IZ-03)</td></tr>
+<tr><td>2. Verifikasi administrasi</td><td>Petugas DPMPTSP</td><td>Membuka permohonan dari <b>Antrean saya</b>, menandai setiap dokumen <b>Sesuai</b> atau <b>Tidak sesuai</b> dengan catatan, lalu memilih <b>Minta perbaikan</b>, <b>Teruskan ke instansi teknis</b>, <b>Setujui</b>, atau <b>Tolak</b>. Minta perbaikan dan Tolak wajib disertai alasan (IZ-04)</td></tr>
+<tr><td>3. Penilaian teknis</td><td>Instansi teknis</td><td>Hanya untuk jenis izin yang memerlukannya. Memilih <b>Memenuhi</b> (permohonan disetujui) atau <b>Tidak memenuhi</b> (ditolak) dan menulis rekomendasi (IZ-05)</td></tr>
+<tr><td>4. Penerbitan</td><td>Petugas DPMPTSP</td><td>Klik <b>Terbitkan izin</b>. Nomor izin dibuat otomatis sesuai format dinas, dan dokumen izin ber-QR dibuat sistem. Pindaian yang sudah ditandatangani bisa diunggah sesudahnya (IZ-06)</td></tr>
+<tr><td>5. Mengunduh izin</td><td>Pemohon</td><td>Mengunduh dokumen izin dari akunnya. QR di dokumen membuka halaman verifikasi keaslian. Izin yang terbit otomatis masuk Database NonOSS (IZ-09)</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="kartu" id="loket"><h2>Layanan berbantuan di loket</h2>
+<p>Pemohon yang datang ke kantor tetap dilayani lewat sistem yang sama, sehingga semua permohonan tercatat di satu tempat. Menu: <b>Layanan berbantuan</b> (akun Petugas).</p>
+<ol>
+  <li>Petugas mencari pemohon dengan <b>email, NIK, atau NIB yang ditulis lengkap</b>. Pencarian harus cocok persis, jadi petugas tidak bisa menelusuri seluruh data pemohon.</li>
+  <li>Bila belum terdaftar, petugas mendaftarkan pemohon baru dari loket.</li>
+  <li>Petugas membuat permohonan atas nama pemohon, mengisi formulir, dan mengunggah syarat hasil pindaian.</li>
+  <li>Pemohon menerima nomor registrasi dan bisa memantau statusnya sendiri lewat <b>Cek status</b>.</li>
+</ol>
+<p>Setiap tindakan petugas atas nama pemohon tercatat di log audit.</p>
+</section>
+
+<section class="kartu" id="database"><h2>Database perizinan (OSS-RBA dan NonOSS)</h2>
+<p>Data rinci hanya bisa dibuka Petugas DPMPTSP (DB-08); pimpinan dan publik hanya melihat angka agregat. Menu ada di sidebar bagian <b>Database Perizinan</b>.</p>
+<h3>Impor OSS <span class="kode redup">/database/oss/impor/</span></h3>
+<ol>
+  <li>Unduh ekspor proyek dari OSS-RBA dalam format Excel.</li>
+  <li>Unggah berkasnya di menu <b>Impor OSS</b>. Kolom dicocokkan otomatis.</li>
+  <li>Halaman hasil menampilkan jumlah baris baru, diperbarui, dan gagal beserta alasannya.</li>
+</ol>
+<p>Id Proyek menjadi kunci, jadi berkas yang sama aman diunggah ulang tanpa data ganda. Sektor KAK (pertanian, perikanan, perdagangan, pariwisata, lainnya) diisi otomatis dari kode KBLI.</p>
+<h3>Berusaha (OSS-RBA) <span class="kode redup">/database/oss/</span></h3>
+<ul>
+  <li>Ringkasan: jumlah usaha (NIB unik), jumlah proyek, nilai investasi, dan tenaga kerja.</li>
+  <li>Pencarian NIB, nama usaha, atau nama proyek, dengan filter tahun, sektor, kecamatan, skala usaha, risiko, status penanaman modal, status izin, dan awalan KBLI.</li>
+  <li>Detail proyek dan profil per pelaku usaha (semua proyek milik satu NIB).</li>
+  <li>Ekspor hasil filter ke <b>Excel</b> atau <b>PDF</b> berkop dinas.</li>
+</ul>
+<h3>Nonberusaha <span class="kode redup">/database/nonoss/</span></h3>
+<ul>
+  <li>Izin nonberusaha yang terbit lewat portal <b>otomatis masuk</b> ke database ini.</li>
+  <li>Izin dari sistem lama atau yang diproses di luar portal dicatat manual lewat <b>Tambah</b>, lengkap dengan dokumennya.</li>
+  <li>Bisa disaring dan diekspor ke Excel/PDF seperti data OSS.</li>
+</ul>
+</section>
+
+<section class="kartu" id="laporan"><h2>Dashboard, analisis, dan laporan untuk pimpinan</h2>
+<p>Pimpinan bisa memantau kinerja layanan dan data usaha tanpa meminta rekap manual.</p>
+<div class="gulir"><table class="tabel">
+<thead><tr><th>Menu</th><th>Siapa</th><th>Isi</th></tr></thead>
+<tbody>
+<tr><td>Dashboard</td><td>Petugas, instansi teknis, pemohon</td><td>Permohonan yang menunggu tindakan, perlu dilengkapi, sedang diproses, masuk 7 hari terakhir, terbit bulan ini, sebaran status, dan aktivitas terbaru</td></tr>
+<tr><td>Data dan analisis <span class="kode">/statistik/</span></td><td>Semua, termasuk publik</td><td>Jumlah usaha, proyek, nilai investasi, tenaga kerja; tren per tahun; sebaran per kecamatan dan sektor; layanan izin online; perizinan nonberusaha. Ekspor Excel/PDF</td></tr>
+<tr><td>Laporan layanan <span class="kode">/laporan/</span></td><td>Petugas, pimpinan, admin</td><td>Laporan per bulan: permohonan masuk, rata-rata lama proses, rincian menurut jenis izin dan status, rata-rata lama di setiap tahap, dan keputusan per petugas. Ekspor Excel/PDF berkop dinas</td></tr>
+</tbody></table></div>
+<p><b>Pengingat batas waktu layanan (IZ-10).</b> Setiap jenis izin punya batas layanan dalam hari. Setelah jadwal harian dipasang di server, sistem mengirim email pengingat setiap pagi hari kerja untuk permohonan yang tinggal 1 hari atau sudah melewati batas, sehingga tidak ada berkas yang terlupa.</p>
+</section>
+
+<section class="kartu" id="investasi"><h2>Pusat Informasi Investasi</h2>
+<p>Halaman <a class="kode" href="{% url 'investasi:daftar' %}">/investasi/</a> menampilkan potensi investasi Lombok Timur kepada calon investor, lengkap dengan lokasinya di Google Maps (Modul 3: IN-01, IN-02, IN-03, IN-07). Untuk pengunjung halaman ini bersifat informasi: mereka melihat, tetapi tidak mengubah apa pun.</p>
+<p>Setiap konten diberi satu dari tiga label kesiapan sesuai PRD 7.1:</p>
+<div class="gulir"><table class="tabel">
+<thead><tr><th>Label</th><th>Arti</th><th>Data minimum</th></tr></thead>
+<tbody>
+<tr><td>Potensi</td><td>Sumber daya atau sektor unggulan yang belum dikaji</td><td>Sektor, lokasi, deskripsi</td></tr>
+<tr><td>Peluang</td><td>Sudah diidentifikasi dan sedang ditawarkan</td><td>+ estimasi investasi, potensi pasar</td></tr>
+<tr><td>Proyek siap tawar</td><td>Lahan terverifikasi, kajian selesai, siap dibicarakan</td><td>+ luas lahan, kontak</td></tr>
+</tbody></table></div>
+<h3>Untuk pengunjung</h3>
+<ol>
+  <li>Saring daftar menurut sektor, kecamatan, atau tingkat kesiapan, lalu klik <b>Terapkan</b>. Proyek siap tawar tampil paling atas.</li>
+  <li>Klik <b>Lihat di peta</b> untuk memindahkan peta ke lokasi proyek itu.</li>
+  <li>Klik <b>Profil lengkap</b> untuk deskripsi, potensi pasar, estimasi investasi, luas lahan, kontak, dan peta. Tombol <b>Buka di Google Maps</b> dan <b>Petunjuk arah</b> membawa investor langsung ke lokasi.</li>
+</ol>
+<h3>Untuk Admin Sistem (mengisi konten)</h3>
+<ol>
+  <li>Buka <a href="{% url 'admin:investasi_peluanginvestasi_changelist' %}">Pengaturan sistem → Potensi dan peluang investasi</a> → <b>Tambah</b>.</li>
+  <li>Isi nama, tingkat kesiapan, sektor, deskripsi, kecamatan, dan lokasi.</li>
+  <li>Titik koordinat: di Google Maps klik kanan lokasinya, klik angka koordinat paling atas (otomatis tersalin), lalu tempel di kolom <b>Titik koordinat</b>. Koordinat yang terbalik atau di luar Indonesia ditolak.</li>
+  <li>Simpan; konten langsung tampil. Untuk menurunkannya, hapus centang <b>Tampil di portal</b>.</li>
+</ol>
+<p>Tanpa kunci Google Maps, peta menampilkan satu titik sekaligus. Dengan kunci (<span class="kode">GOOGLE_MAPS_API_KEY</span>), semua titik tampil bersamaan di satu peta dan setiap penanda bisa diklik.</p>
+</section>
+
+<section class="kartu" id="pengaturan"><h2>Pengaturan sistem (Admin Sistem)</h2>
+<p>Semua isian yang bisa berubah tanpa bantuan pengembang ada di <a href="{% url 'admin:index' %}">Pengaturan sistem</a> (<span class="kode">/admin/</span>). Hanya Admin Sistem yang bisa masuk, dan setiap perubahan tercatat di log audit.</p>
+<div class="gulir"><table class="tabel">
+<thead><tr><th>Menu</th><th>Yang diatur</th></tr></thead>
+<tbody>
+<tr><td>Pengguna</td><td>Membuat akun Petugas, Pimpinan, Instansi Teknis, dan Admin. Akun instansi wajib memilih instansinya</td></tr>
+<tr><td>Impor pengguna</td><td>Memindahkan banyak akun sekaligus dari CSV/Excel (templat tersedia). Pengguna hasil impor wajib mengganti password awal saat pertama masuk</td></tr>
+<tr><td>Instansi</td><td>Daftar instansi teknis penilai (Dinas PUPR, Bappeda, dan lainnya)</td></tr>
+<tr><td>Jenis izin</td><td>Nama, kode, persyaratan, batas waktu layanan (hari), dan apakah perlu penilaian teknis</td></tr>
+<tr><td>Template email</td><td>Subjek dan isi email notifikasi untuk setiap perubahan status</td></tr>
+<tr><td>Kecamatan, kelurahan, KBLI</td><td>Data rujukan; sektor KAK per KBLI bisa dikoreksi di sini</td></tr>
+<tr><td>Jenis izin NonOSS</td><td>Jenis perizinan untuk database nonberusaha</td></tr>
+<tr><td>Potensi dan peluang investasi</td><td>Konten Pusat Informasi Investasi dan titik petanya</td></tr>
+<tr><td>Riwayat impor OSS</td><td>Siapa mengimpor apa dan hasilnya</td></tr>
+<tr><td>Log audit</td><td>Catatan siapa melakukan apa dan kapan, beserta alamat IP</td></tr>
+</tbody></table></div>
+<p>Data yang dirujuk permohonan tidak bisa dihapus dari panel admin, hanya dinonaktifkan. Dengan begitu riwayat izin yang sudah terbit tidak pernah rusak.</p>
+</section>
+
+<section class="kartu" id="keamanan"><h2>Keamanan dan perlindungan data</h2>
+<p>Berkas pemohon (KTP, sertifikat, gambar lokasi) adalah data pribadi, jadi portal dirancang agar tidak bisa dibuka orang yang tidak berhak.</p>
+<ul>
+  <li><b>Berkas tanpa alamat publik.</b> Setiap unduhan diperiksa haknya dulu oleh sistem, dan setiap lihat atau unduh tercatat di log audit.</li>
+  <li><b>Akses sesuai peran.</b> Pemohon hanya melihat permohonannya sendiri; instansi teknis hanya permohonan yang diteruskan ke instansinya; data rinci database hanya untuk petugas.</li>
+  <li><b>Login dikunci 15 menit</b> setelah 5 kali salah password per akun, atau 30 kali per alamat IP, untuk mencegah tebak password.</li>
+  <li><b>Cek status tanpa data pribadi.</b> Halaman publik hanya menampilkan jenis izin, tahapan, dan tanggal.</li>
+  <li><b>Izin bisa diverifikasi.</b> QR di dokumen izin membuka halaman verifikasi resmi, sehingga izin palsu mudah dikenali.</li>
+  <li><b>Jejak lengkap.</b> Riwayat verifikasi dan log audit tidak bisa diubah atau dihapus dari aplikasi.</li>
+  <li><b>Server.</b> Akses HTTPS, berjalan di Docker dengan database sendiri, dan skrip pencadangan (database harian, berkas mingguan) ke disk terpisah setelah jadwalnya dipasang.</li>
+</ul>
+</section>
+
+<section class="kartu" id="demo"><h2>Skenario demo presentasi (sekitar 25 menit)</h2>
+<p>Urutan ini menunjukkan satu izin dari pengajuan sampai terbit, lalu sisi data dan investasi. Gunakan dua jendela browser: satu biasa, satu penyamaran (incognito), supaya bisa berganti akun cepat.</p>
+<p><b>Persiapan (sebelum hadirin datang):</b> jalankan <span class="kode">python manage.py buat_akun_demo</span> dengan <span class="kode">DJANGO_DEBUG=1</span>. Perintah ini menyiapkan akun demo, satu permohonan KKPR yang sudah diajukan, dan tiga contoh potensi investasi. Uji juga koneksi internet untuk peta.</p>
+<ol>
+  <li><b>Halaman publik (3 menit).</b> Buka beranda, lalu <b>Layanan izin</b>: tunjukkan persyaratan dan alur KKPR. Buka <b>Data perizinan</b> untuk statistik publik.</li>
+  <li><b>Pendaftaran (3 menit).</b> Klik <b>Daftar</b>, isi data rekaan dengan email yang bisa dibuka di depan hadirin, lalu masukkan kode OTP yang masuk.</li>
+  <li><b>Pemohon (3 menit).</b> Masuk sebagai <span class="kode">pemohon@sik.test</span>. Tunjukkan dashboard, permohonan KKPR contoh, dan statusnya. Tunjukkan cara mengunggah syarat dan pratinjau PDF.</li>
+  <li><b>Petugas (5 menit).</b> Masuk sebagai <span class="kode">petugas@sik.test</span>. Buka <b>Antrean saya</b>, pilih permohonan, tandai tiap dokumen <b>Sesuai</b>, lalu <b>Teruskan ke instansi teknis</b>. Tunjukkan juga <b>Layanan berbantuan</b> untuk pemohon yang datang ke loket.</li>
+  <li><b>Instansi teknis (2 menit).</b> Masuk sebagai <span class="kode">pupr@sik.test</span>. Buka permohonan dari <b>Antrean saya</b>, pilih <b>Memenuhi</b>, dan tulis rekomendasi.</li>
+  <li><b>Izin terbit (3 menit).</b> Kembali sebagai petugas, buka permohonan yang <b>Disetujui</b>, klik <b>Terbitkan izin</b>. Unduh dokumen izin, lalu pindai QR-nya dengan HP untuk menunjukkan halaman verifikasi.</li>
+  <li><b>Database dan laporan (3 menit).</b> Buka <b>Berusaha (OSS-RBA)</b>, terapkan filter kecamatan atau sektor, ekspor ke Excel. Masuk sebagai <span class="kode">pimpinan@sik.test</span> dan buka <b>Laporan layanan</b>.</li>
+  <li><b>Investasi (3 menit).</b> Buka <b>Investasi</b>, saring per sektor, klik <b>Lihat di peta</b>, lalu <b>Profil lengkap</b> dan <b>Petunjuk arah</b>. Tutup dengan menunjukkan cara admin menambah konten di <b>Pengaturan sistem</b>.</li>
+</ol>
+<p>Cadangan bila internet putus: email OTP tidak masuk dan peta tidak tampil. Siapkan tangkapan layar kedua langkah itu sebelum presentasi. Permohonan contoh hanya dibuat sekali; kalau sudah terbit saat latihan, ajukan permohonan baru sebagai pemohon sebelum presentasi.</p>
+</section>
+
+<section class="kartu" id="status"><h2>Status pengembangan dan rencana berikutnya</h2>
+<p>Rilis 1 (database perizinan) dan Rilis 2 (layanan izin daring KKPR) sudah berjalan; Modul 3 (investasi) baru bagian dasarnya. Daftar berikut bisa dipakai untuk menyepakati prioritas dengan kantor.</p>
+<div class="gulir"><table class="tabel">
+<thead><tr><th>Fitur</th><th>Kode PRD</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Pendaftaran dengan OTP email</td><td>IZ-01</td><td><span class="lencana sah">Selesai</span></td></tr>
+<tr><td>Katalog izin, permohonan KKPR, verifikasi, penilaian teknis, izin ber-QR</td><td>IZ-02 s.d. IZ-09</td><td><span class="lencana sah">Selesai</span></td></tr>
+<tr><td>Pengingat batas waktu layanan</td><td>IZ-10</td><td><span class="lencana sah">Selesai</span> <span class="kecil redup">jadwal harian perlu dipasang di server</span></td></tr>
+<tr><td>Database OSS-RBA dan NonOSS, impor, ekspor berkop</td><td>Modul 1</td><td><span class="lencana sah">Selesai</span></td></tr>
+<tr><td>Statistik publik dan laporan pimpinan</td><td>Modul 4</td><td><span class="lencana sah">Selesai</span></td></tr>
+<tr><td>Daftar, profil, dan peta potensi investasi</td><td>IN-01, IN-02, IN-03, IN-07</td><td><span class="lencana sah">Selesai</span> <span class="kecil redup">foto dan dokumen kajian belum</span></td></tr>
+<tr><td>Unduh profil proyek investasi dalam PDF</td><td>IN-04</td><td><span class="lencana">Belum</span></td></tr>
+<tr><td>Formulir minat investor ke kotak masuk DPMPTSP</td><td>IN-05</td><td><span class="lencana">Belum</span></td></tr>
+<tr><td>Halaman dalam bahasa Inggris</td><td>IN-06</td><td><span class="lencana">Belum</span></td></tr>
+<tr><td>OTP lewat WhatsApp</td><td>IZ-01</td><td><span class="lencana aktif">Menunggu gateway WhatsApp</span></td></tr>
+</tbody></table></div>
+<p>Sebelum dipakai publik, kantor perlu menyiapkan:</p>
+<ul>
+  <li>Domain resmi dan pemasangan di server (Docker di belakang Nginx Proxy Manager)</li>
+  <li>Akun email pengirim resmi untuk OTP dan notifikasi (lihat <span class="kode">docs/PANDUAN_EMAIL.md</span>)</li>
+  <li>Daftar akun petugas, pimpinan, dan instansi teknis</li>
+  <li>Ketetapan daftar syarat final per jenis izin dan template email</li>
+  <li>Konten awal potensi dan peluang investasi beserta titik lokasinya</li>
+  <li>Kunci Google Maps bila ingin semua titik tampil di satu peta</li>
+</ul>
+</section>
+</div>
+</div>
+{% endblock %}

@@ -46,6 +46,13 @@ Aturan penting di kode:
 - Data rinci hanya untuk Petugas DPMPTSP (PRD DB-08). Pimpinan dan publik hanya melihat agregat.
 - Login dikunci 15 menit setelah 5 kali gagal per akun (30 per alamat IP).
 
+## Panduan aplikasi (khusus Admin Sistem)
+
+Menu **Panduan aplikasi** (`/panduan/`) berisi penjelasan semua fitur, diagram alur permohonan, dan
+skenario demo untuk presentasi atau serah terima. Hanya Admin Sistem yang bisa membukanya; peran lain
+mendapat 403. Naskahnya ada di `templates/core/panduan.html`; perbarui di sana bila fitur berubah.
+Tombol **Cetak / simpan PDF** mencetak panduan tanpa sidebar.
+
 ## Pusat Informasi Investasi (Modul 3)
 
 Halaman publik `/investasi/` (tanpa login): daftar dengan filter sektor, kecamatan, dan tingkat kesiapan
