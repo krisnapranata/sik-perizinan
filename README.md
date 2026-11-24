@@ -21,13 +21,17 @@ Browser ──HTTPS 443──> Nginx Proxy Manager ──> sik_nginx :80 (host 8
 | `perizinan/` | Modul 2: katalog izin, permohonan KKPR, verifikasi petugas, penilaian instansi teknis, nomor izin otomatis, dokumen izin ber-QR, cek status, notifikasi, pengingat SLA |
 | `laporan/` | Laporan bulanan dan ekspor Excel/PDF |
 | `basisdata/` | Modul 1 dan 4 PRD PANDU LOTIM: database OSS-RBA (impor ekspor OSS), database NonOSS, statistik publik `/statistik/`, ekspor dengan kop |
+| `investasi/` | Modul 3: Pusat Informasi Investasi `/investasi/` (potensi, peluang, proyek siap tawar) dengan peta Google Maps |
 | `templates/`, `static/` | Tampilan (font Geist dan ikon Lucide disimpan lokal, tanpa CDN) |
-| `nginx/`, `scripts/` | Reverse proxy dan skrip server |
+| `deploy/`, `scripts/` | Nginx internal, contoh env produksi, skrip cadangan |
 
 Aturan penting di kode:
 
 - Perubahan status hanya lewat `perizinan/services.py`.
 - Aturan akses hanya di `perizinan/permissions.py` dan `akun/permissions.py`.
+- CSS/JS dimuat dengan `{% load aset %}{% aset 'css/sik.css' %}` (bukan `{% static %}`), yang menambahkan
+  `?v=<hash isi berkas>`. Nginx menyimpan URL ber-`v` selama setahun, jadi browser langsung memakai
+  berkas baru setelah deploy tanpa perlu menaikkan nomor versi manual.
 - Berkas tidak punya URL publik. Django memeriksa izin, lalu Nginx mengirim isinya lewat
   `X-Accel-Redirect` ke lokasi internal `/_berkas/`.
 
@@ -41,6 +45,23 @@ Aturan penting di kode:
 - **Kop ekspor** diatur lewat `KOP_INSTANSI`, `KOP_DINAS`, `KOP_ALAMAT` di `.env`.
 - Data rinci hanya untuk Petugas DPMPTSP (PRD DB-08). Pimpinan dan publik hanya melihat agregat.
 - Login dikunci 15 menit setelah 5 kali gagal per akun (30 per alamat IP).
+
+## Pusat Informasi Investasi (Modul 3)
+
+Halaman publik `/investasi/` (tanpa login): daftar dengan filter sektor, kecamatan, dan tingkat kesiapan
+(IN-01), profil lengkap (IN-02), dan peta lokasi Google Maps (IN-03). Admin Sistem mengisi kontennya di
+`/admin/` → **Potensi dan peluang investasi** (IN-07). Titik lokasi cukup ditempel dari Google Maps:
+klik kanan titik di peta, klik angka koordinat untuk menyalin, lalu tempel ke kolom *Titik koordinat*.
+Data minimum mengikuti PRD 7.1: peluang wajib punya estimasi investasi dan potensi pasar, sedangkan proyek
+siap tawar juga wajib punya luas lahan dan kontak. Untuk menurunkan konten dari portal, matikan *tampil*.
+
+Peta bekerja tanpa kunci API: setiap profil memakai embed Google Maps, dan di halaman daftar tombol
+**Lihat di peta** memindahkan peta ke titik yang dipilih. Isi `GOOGLE_MAPS_API_KEY` supaya semua
+titik tampil sekaligus di satu peta. Aktifkan Maps JavaScript API dan Maps Embed API, lalu batasi kunci
+dengan HTTP referrer ke domain portal.
+
+Belum dibuat: foto dan dokumen kajian per proyek, unduh profil PDF (IN-04), formulir minat investor
+(IN-05), dan versi bahasa Inggris (IN-06).
 
 ## Pengembangan lokal
 
@@ -71,7 +92,8 @@ Untuk mencoba semua peran tanpa membuat akun satu per satu:
 python manage.py buat_akun_demo
 ```
 
-Perintah ini membuat akun di bawah dan satu permohonan KKPR Nonberusaha contoh yang sudah diajukan.
+Perintah ini membuat akun di bawah, satu permohonan KKPR Nonberusaha contoh yang sudah diajukan,
+dan tiga contoh potensi investasi bertanda "(contoh)" untuk mencoba peta.
 Aman dijalankan ulang: akun yang sudah ada tidak dibuat ganda, tetapi passwordnya disetel ulang ke `demo123`. Perintah ini **menolak berjalan bila
 `DJANGO_DEBUG` bukan 1**, jadi tidak bisa membuat akun berpassword lemah di server produksi.
 

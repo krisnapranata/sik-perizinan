@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% load angka %}{% block judul %}{{ p.nama }}{% endblock %}{% block lebar %}penuh{% endblock %}
+{% block isi %}
+<p class="kecil"><a href="{% url 'investasi:daftar' %}">← Semua potensi investasi</a></p>
+<div class="kepala"><div>{% include "investasi/_lencana.html" %} <span class="chip">{{ p.get_sektor_display }}</span>
+<h1 style="margin-top:8px">{{ p.nama }}</h1><p>Kecamatan {{ p.kecamatan.nama }}{% if p.lokasi %}, {{ p.lokasi }}{% endif %}</p></div></div>
+
+<div class="kisi kisi-detail">
+<div class="kisi" style="gap:16px">
+  <section class="kartu tanpa-isi peta-kartu" aria-labelledby="judul-lokasi">
+    <div class="kartu-kepala"><h2 id="judul-lokasi">Lokasi</h2>
+    {% if p.ada_koordinat %}<div class="deret">
+      <a class="tombol garis kecil" href="https://www.google.com/maps/search/?api=1&query={{ p.koordinat }}" target="_blank" rel="noopener">{% include "ikon/arrow-up-right.svg" %}Buka di Google Maps</a>
+      <a class="tombol garis kecil" href="https://www.google.com/maps/dir/?api=1&destination={{ p.koordinat }}" target="_blank" rel="noopener">Petunjuk arah</a>
+    </div>{% endif %}</div>
+    {% if p.ada_koordinat %}
+    <div class="peta"><iframe title="Peta lokasi {{ p.nama }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+      src="{% if kunci_peta %}https://www.google.com/maps/embed/v1/place?key={{ kunci_peta|urlencode }}&q={{ p.koordinat }}&zoom=14&language=id{% else %}https://maps.google.com/maps?q={{ p.koordinat }}&z=14&hl=id&output=embed{% endif %}"></iframe></div>
+    {% else %}<p class="redup kecil" style="padding:0 20px 20px">Titik lokasi belum dipetakan. Hubungi DPMPTSP untuk informasi lokasi.</p>{% endif %}
+  </section>
+  <section class="kartu"><div class="kartu-kepala"><h2>Deskripsi</h2></div>
+  <p style="margin:0;white-space:pre-line">{{ p.deskripsi }}</p>
+  {% if p.potensi_pasar %}<h3 style="margin-top:20px">Potensi pasar</h3><p style="margin:0;white-space:pre-line">{{ p.potensi_pasar }}</p>{% endif %}
+  </section>
+</div>
+
+<section class="kartu"><div class="kartu-kepala"><h2>Ringkasan</h2></div>
+<dl class="data">
+  <dt>Tingkat kesiapan</dt><dd>{{ p.get_tingkat_display }}</dd>
+  <dt>Sektor</dt><dd>{{ p.get_sektor_display }}</dd>
+  <dt>Kecamatan</dt><dd>{{ p.kecamatan.nama }}</dd>
+  {% if p.luas_lahan_ha %}<dt>Luas lahan</dt><dd>{{ p.luas_lahan_ha|floatformat:"-2" }} ha</dd>{% endif %}
+  {% if p.estimasi_investasi %}<dt>Estimasi investasi</dt><dd>{{ p.estimasi_investasi|rupiah }}</dd>{% endif %}
+  {% if p.ada_koordinat %}<dt>Titik koordinat</dt><dd class="kode">{{ p.lintang }}, {{ p.bujur }}</dd>{% endif %}
+  <dt>Diperbarui</dt><dd>{{ p.diperbarui|date:"j F Y" }}</dd>
+</dl>
+<h3 style="margin-top:20px">Kontak</h3>
+<p style="margin:0">{{ p.kontak_tampil }}</p>
+</section>
+</div>
+{% endblock %}

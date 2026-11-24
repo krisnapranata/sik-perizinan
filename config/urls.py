@@ -13,6 +13,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("akun/", include("akun.urls")),
     path("laporan/", include("laporan.urls")),
+    path("investasi/", include("investasi.urls")),
     path("", include("basisdata.urls")),
     path("", include("perizinan.urls")),
 ]

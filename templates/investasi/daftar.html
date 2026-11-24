@@ -1,0 +1,51 @@
+{% extends "base.html" %}{% load aset angka %}{% block judul %}Potensi dan peluang investasi{% endblock %}{% block lebar %}penuh{% endblock %}
+{% block isi %}
+<div class="kepala"><div><h1>Potensi dan peluang investasi</h1>
+<p>{{ daftar_peluang|length }} {% if aktif %}hasil sesuai filter{% else %}potensi, peluang, dan proyek siap tawar di Kabupaten Lombok Timur{% endif %}.</p></div></div>
+
+<section class="kartu tanpa-isi jeda">
+<form class="saring" method="get" role="search" aria-label="Filter investasi">
+  <div><label for="f-sektor">Sektor</label><select id="f-sektor" name="sektor"><option value="">Semua</option>{% for k, l in pilihan.sektor %}<option value="{{ k }}" {% if aktif.sektor == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div><label for="f-kec">Kecamatan</label><select id="f-kec" name="kecamatan"><option value="">Semua</option>{% for k in pilihan.kecamatan %}<option value="{{ k.pk }}" {% if aktif.kecamatan == k.pk|stringformat:"s" %}selected{% endif %}>{{ k.nama }}</option>{% endfor %}</select></div>
+  <div><label for="f-tingkat">Tingkat kesiapan</label><select id="f-tingkat" name="tingkat"><option value="">Semua</option>{% for k, l in pilihan.tingkat %}<option value="{{ k }}" {% if aktif.tingkat == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="tombol-saring"><button class="aksen">{% include "ikon/search.svg" %}Terapkan</button>{% if aktif %}<a class="tombol garis" href="{% url 'investasi:daftar' %}">Reset</a>{% endif %}</div>
+</form>
+</section>
+
+<div class="kisi kisi-peta">
+<section class="kartu tanpa-isi peta-kartu" aria-labelledby="judul-peta">
+  <div class="kartu-kepala"><div><h2 id="judul-peta">Peta lokasi</h2>
+  <p class="redup kecil" id="keterangan-peta">{% if not titik %}Belum ada titik lokasi untuk pilihan ini.{% elif kunci_peta %}{{ titik|length }} titik. Klik penanda untuk melihat ringkasannya.{% else %}Menampilkan {{ titik.0.nama }}. Pilih "Lihat di peta" pada daftar untuk berpindah lokasi.{% endif %}</p></div></div>
+  {% if kunci_peta %}
+  <div class="peta" id="peta" data-mode="js" role="region" aria-label="Peta lokasi potensi investasi"></div>
+  {% else %}
+  <div class="peta" id="peta" data-mode="embed">
+    <iframe id="peta-embed" title="Peta lokasi {{ titik.0.nama|default:'Kabupaten Lombok Timur' }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+      src="https://maps.google.com/maps?q={{ pusat.lat }},{{ pusat.lng }}&z={% if titik %}14{% else %}10{% endif %}&hl=id&output=embed"></iframe>
+  </div>
+  {% endif %}
+</section>
+
+<div class="daftar-investasi">
+{% for p in daftar_peluang %}
+<article class="kartu kartu-p">
+  <div class="atas-p"><div>{% include "investasi/_lencana.html" %} <span class="chip">{{ p.get_sektor_display }}</span>
+  <h3 style="margin-top:8px"><a href="{% url 'investasi:detail' p.pk %}">{{ p.nama }}</a></h3>
+  <p class="redup kecil" style="margin:4px 0 0">Kec. {{ p.kecamatan.nama }}{% if p.lokasi %} · {{ p.lokasi }}{% endif %}</p></div></div>
+  <p class="kecil" style="margin:8px 0">{{ p.deskripsi|truncatewords:30 }}</p>
+  <div class="deret kecil">
+    {% if p.estimasi_investasi %}<span>Estimasi {{ p.estimasi_investasi|rupiah_ringkas }}</span>{% endif %}
+    {% if p.luas_lahan_ha %}<span>{{ p.luas_lahan_ha|floatformat:"-2" }} ha</span>{% endif %}
+    {% if p.ada_koordinat %}<button type="button" class="tombol garis kecil" data-tampil-peta="{{ p.pk }}">Lihat di peta</button>{% endif %}
+    <a class="tombol garis kecil" href="{% url 'investasi:detail' p.pk %}">Profil lengkap</a>
+  </div>
+</article>
+{% empty %}<div class="kartu kosong"><p>Belum ada potensi investasi yang dipublikasikan{% if aktif %} untuk filter ini{% endif %}.</p></div>
+{% endfor %}
+</div>
+</div>
+
+{{ titik|json_script:"data-titik" }}{{ pusat|json_script:"data-pusat" }}
+<script src="{% aset 'js/peta-investasi.js' %}"></script>
+{% if kunci_peta and titik %}<script async src="https://maps.googleapis.com/maps/api/js?key={{ kunci_peta|urlencode }}&callback=sikPetaSiap&loading=async&language=id&region=ID"></script>{% endif %}
+{% endblock %}

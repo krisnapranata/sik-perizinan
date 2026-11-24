@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "perizinan",
     "laporan",
     "basisdata",
+    "investasi",
 ]
 
 MIDDLEWARE = [
@@ -181,4 +182,9 @@ KOP_ALAMAT = os.environ.get("KOP_ALAMAT", "Selong, Lombok Timur, Nusa Tenggara B
 # Nomor izin otomatis (PRD IZ-06). Penanda: {urut}, {kode}, {tahun}, {bulan}.
 FORMAT_NOMOR_IZIN = os.environ.get("FORMAT_NOMOR_IZIN", "{urut:04d}/{kode}/DPMPTSP/{tahun}")
 # Pejabat yang tercantum di dokumen izin (tanda tangan tetap sesuai prosedur dinas).
+# Peta Pusat Informasi Investasi. Tanpa kunci, peta tetap tampil lewat embed Google Maps
+# (satu titik sekali tampil). Dengan kunci (Maps JavaScript API + Maps Embed API, dibatasi
+# HTTP referrer ke domain portal), semua titik tampil sekaligus di satu peta.
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
+
 PEJABAT_IZIN = os.environ.get("PEJABAT_IZIN", "Kepala DPMPTSP Kabupaten Lombok Timur")

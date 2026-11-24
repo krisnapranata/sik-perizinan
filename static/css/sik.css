@@ -336,3 +336,13 @@ dialog.pratinjau::backdrop{background:rgba(9,11,15,.55);backdrop-filter:blur(3px
 .saring .cari-luas{grid-column:span 2}
 .saring .tombol-saring{display:flex;gap:8px}
 @media (max-width:640px){.saring .cari-luas{grid-column:1/-1}}
+
+/* Pusat Informasi Investasi: peta Google Maps */
+.kisi-peta{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start}
+.kisi-peta .peta-kartu{position:sticky;top:76px}
+.daftar-investasi{display:grid;gap:12px}
+.peta{height:440px;margin:0 20px 20px;border-radius:var(--r-kecil);overflow:hidden;border:1px solid var(--garis);background:var(--permukaan-2)}
+.peta iframe{width:100%;height:100%;border:0;display:block}
+.peta-info{font:14px/1.45 var(--huruf);color:#1f2328;max-width:240px;display:grid;gap:4px}
+.peta-info a{font-weight:600}
+@media(max-width:960px){.kisi-peta{grid-template-columns:1fr}.kisi-peta .peta-kartu{position:static}.peta{height:320px}}

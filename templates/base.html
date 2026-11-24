@@ -1,12 +1,14 @@
-{% load static %}<!doctype html>
+{% load static aset %}<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block judul %}Layanan Perizinan{% endblock %} | PANDU LOTIM</title>
 <script>try{var t=localStorage.getItem("sik-tema");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+{# Font tanpa ?v= karena URL preload harus sama persis dengan url() di sik.css. #}
 <link rel="preload" href="{% static 'fonts/geist.woff2' %}" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="{% static 'css/sik.css' %}">
+<link rel="stylesheet" href="{% aset 'css/sik.css' %}">
+{% block kepala %}{% endblock %}
 </head>
 <body>
 <a class="lompat" href="#isi">Langsung ke isi</a>
@@ -40,6 +42,7 @@
       <a class="navi" href="{% url 'laporan:dasbor' %}" {% if request.resolver_match.app_name == 'laporan' %}aria-current="page"{% endif %}>{% include "ikon/file-text.svg" %}Laporan layanan</a>{% endif %}
     <div class="grup">Lainnya</div>
     <a class="navi" href="{% url 'perizinan:katalog' %}" {% if u == 'katalog' or u == 'katalog_detail' %}aria-current="page"{% endif %}>{% include "ikon/file-text.svg" %}Jenis izin dan syarat</a>
+    <a class="navi" href="{% url 'investasi:daftar' %}" {% if request.resolver_match.app_name == 'investasi' %}aria-current="page"{% endif %}>{% include "ikon/chart-column.svg" %}Potensi investasi</a>
     <a class="navi" href="{% url 'perizinan:cek_status' %}" {% if u == 'cek_status' %}aria-current="page"{% endif %}>{% include "ikon/search.svg" %}Cek status</a>
     <a class="navi" href="{% url 'akun:ganti_password' %}" {% if u == 'ganti_password' %}aria-current="page"{% endif %}>{% include "ikon/user.svg" %}Ganti password</a>
     {% if user.is_staff %}<a class="navi" href="{% url 'admin:akun_user_impor' %}">{% include "ikon/upload.svg" %}Impor pengguna</a>
@@ -65,6 +68,7 @@
     <nav aria-label="Menu utama">
       <a href="{% url 'perizinan:katalog' %}">Layanan izin</a>
       <a href="{% url 'basisdata:statistik' %}">Data perizinan</a>
+      <a href="{% url 'investasi:daftar' %}">Investasi</a>
       <a href="{% url 'perizinan:cek_status' %}">Cek status</a>
       <a href="{% url 'akun:masuk' %}">Masuk</a>
       <a class="tombol kecil" href="{% url 'akun:daftar' %}">Daftar</a>

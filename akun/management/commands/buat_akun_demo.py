@@ -7,6 +7,7 @@ from django.db import transaction
 
 from akun.models import Instansi, Pemohon, Peran, User
 from basisdata.models import Kecamatan
+from investasi.models import PeluangInvestasi, Tingkat
 from perizinan import services
 from perizinan.forms import FormulirForm
 from perizinan.models import JenisIzin
@@ -17,6 +18,31 @@ PETUGAS = [
     ("petugas@sik.test", "Baiq Nurul Aini", Peran.PETUGAS, "Front Office dan Verifikasi"),
     ("pimpinan@sik.test", "H. Muhammad Zaini", Peran.PIMPINAN, "Kepala Dinas"),
     ("admin@sik.test", "Admin Sistem", Peran.ADMIN, "Pengelola Sistem"),
+]
+
+# Contoh Pusat Informasi Investasi (data rekaan, ditandai "(contoh)") agar peta bisa dicoba.
+INVESTASI_CONTOH = [
+    {
+        "nama": "Kawasan agrowisata Sembalun (contoh)", "tingkat": Tingkat.SIAP_TAWAR,
+        "sektor": "pariwisata", "kecamatan": "Sembalun", "lokasi": "Desa Sembalun Lawang",
+        "deskripsi": "Data contoh. Kebun stroberi dan sayur dataran tinggi di kaki Rinjani untuk wisata petik.",
+        "luas_lahan_ha": 12, "estimasi_investasi": 15_000_000_000,
+        "potensi_pasar": "Data contoh. Pendaki Rinjani dan wisatawan domestik.",
+        "kontak": "Bidang Promosi Penanaman Modal DPMPTSP", "lintang": "-8.357700", "bujur": "116.529700",
+    },
+    {
+        "nama": "Pengolahan hasil perikanan Labuhan Haji (contoh)", "tingkat": Tingkat.PELUANG,
+        "sektor": "perikanan", "kecamatan": "Labuhan Haji", "lokasi": "Pelabuhan perikanan",
+        "deskripsi": "Data contoh. Cold storage dan pengolahan ikan tangkap nelayan setempat.",
+        "estimasi_investasi": 8_500_000_000, "potensi_pasar": "Data contoh. Pasar Lombok dan Bali.",
+        "lintang": "-8.673600", "bujur": "116.567900",
+    },
+    {
+        "nama": "Wisata bahari Tanjung Ringgit (contoh)", "tingkat": Tingkat.POTENSI,
+        "sektor": "pariwisata", "kecamatan": "Jerowaru", "lokasi": "Desa Sekaroh",
+        "deskripsi": "Data contoh. Tebing dan pantai di ujung tenggara Lombok yang belum dikaji.",
+        "lintang": "-8.866000", "bujur": "116.583000",
+    },
 ]
 
 # PDF minimal yang valid, hanya untuk bukti contoh.
@@ -75,6 +101,12 @@ class Command(BaseCommand):
                     services.unggah_dokumen(p, syarat, _pdf(f"{syarat.nama}.pdf"), user)
                 services.kirim(p, user)
                 self.stdout.write(f"Permohonan contoh {p.nomor_registrasi} sudah diajukan.")
+
+            for data in INVESTASI_CONTOH:
+                data = dict(data, kecamatan=Kecamatan.objects.get(nama=data["kecamatan"]))
+                _, baru = PeluangInvestasi.objects.get_or_create(nama=data["nama"], defaults=data)
+                if baru:
+                    self.stdout.write(f"Contoh investasi dibuat: {data['nama']}")
 
         self.stdout.write(self.style.SUCCESS(f"Akun demo siap. Password semua akun: {PASSWORD}"))
 
